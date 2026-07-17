@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byeori.hobbymate.member.dao.MemberDao">
+
+    <select id="existsByLoginId" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM HM_MEMBER
+            WHERE LOGIN_ID = #{loginId}
+        )
+    </select>
+
+    <select id="existsByNickname" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM HM_MEMBER
+            WHERE NICKNAME = #{nickname}
+        )
+    </select>
+
+    <select id="existsByEmail" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM HM_MEMBER
+            WHERE LOWER(EMAIL) = LOWER(#{email})
+        )
+    </select>
+
+    <insert id="insertMember"
+            parameterType="com.byeori.hobbymate.member.vo.MemberRegistration">
+        INSERT INTO HM_MEMBER (
+            LOGIN_ID,
+            PASSWORD,
+            NAME,
+            NICKNAME,
+            EMAIL,
+            PHONE,
+            BIRTH_DATE,
+            GENDER,
+            IDENTITY_VERIFIED_YN
+        ) VALUES (
+            #{loginId},
+            #{encodedPassword},
+            #{name},
+            #{nickname},
+            #{email},
+            #{phone},
+            #{birthDate},
+            #{gender},
+            'N'
+        )
+    </insert>
+</mapper>
