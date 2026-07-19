@@ -21,8 +21,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.byeori.hobbymate.auth.security.HobbyMateUserDetails;
 import com.byeori.hobbymate.common.exception.MemberProfileUpdateException;
+import com.byeori.hobbymate.common.exception.MemberPasswordChangeException;
 import com.byeori.hobbymate.member.dto.AvailabilityResponse;
 import com.byeori.hobbymate.member.dto.MemberMyPageResponse;
+import com.byeori.hobbymate.member.dto.MemberPasswordChangeRequest;
 import com.byeori.hobbymate.member.dto.MemberProfileUpdateRequest;
 import com.byeori.hobbymate.member.dto.MemberProfileUpdateResult;
 import com.byeori.hobbymate.member.service.MemberMyPageService;
@@ -141,6 +143,57 @@ public class MemberMyPageController {
                 bindingResult.rejectValue(ex.getField(), "profile.update.invalid", ex.getMessage());
             }
             return restoreEditForm(userDetails, request, model);
+        }
+    }
+
+    @GetMapping("/mypage/password")
+    public String passwordForm(
+            @AuthenticationPrincipal HobbyMateUserDetails userDetails,
+            HttpServletRequest request,
+            Model model) {
+        if (userDetails == null) {
+            return "redirect:/auth/login";
+        }
+        if (memberMyPageService.getMyPage(userDetails.getMemberId()).isEmpty()) {
+            clearInvalidAuthentication(request);
+            return "redirect:/auth/login";
+        }
+
+        model.addAttribute("passwordForm", new MemberPasswordChangeRequest());
+        return "member/mypage-password";
+    }
+
+    @PostMapping("/mypage/password")
+    public String changePassword(
+            @AuthenticationPrincipal HobbyMateUserDetails userDetails,
+            Authentication authentication,
+            @Valid @ModelAttribute("passwordForm") MemberPasswordChangeRequest passwordForm,
+            BindingResult bindingResult,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+        if (!isExpectedAuthentication(userDetails, authentication)) {
+            clearInvalidAuthentication(request);
+            return "redirect:/auth/login";
+        }
+
+        if (bindingResult.hasErrors()) {
+            passwordForm.clearPasswords();
+            return "member/mypage-password";
+        }
+
+        try {
+            memberMyPageService.changePassword(userDetails.getMemberId(), passwordForm);
+            redirectAttributes.addFlashAttribute("successMessage", "비밀번호가 변경되었습니다.");
+            return "redirect:/member/mypage";
+        } catch (MemberPasswordChangeException ex) {
+            if (ex.getField() == null) {
+                bindingResult.reject("password.change.failed", ex.getMessage());
+            } else {
+                bindingResult.rejectValue(
+                        ex.getField(), "password.change.invalid", ex.getMessage());
+            }
+            passwordForm.clearPasswords();
+            return "member/mypage-password";
         }
     }
 

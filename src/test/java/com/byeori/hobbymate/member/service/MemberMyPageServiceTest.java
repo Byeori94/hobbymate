@@ -17,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.byeori.hobbymate.common.exception.MemberProfileUpdateException;
 import com.byeori.hobbymate.member.dao.MemberDao;
@@ -31,6 +32,9 @@ class MemberMyPageServiceTest {
 
     @Mock
     private MemberDao memberDao;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private MemberMyPageService memberMyPageService;

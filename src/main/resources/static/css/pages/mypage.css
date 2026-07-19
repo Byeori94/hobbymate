@@ -125,10 +125,12 @@ body {
 .mypage-actions {
     display: flex;
     justify-content: flex-end;
+    gap: 10px;
     padding: 0 36px 30px;
 }
 
-.mypage-edit-link {
+.mypage-edit-link,
+.mypage-password-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -143,11 +145,13 @@ body {
     transition: background-color 0.18s ease;
 }
 
-.mypage-edit-link:hover {
+.mypage-edit-link:hover,
+.mypage-password-link:hover {
     background: #229a43;
 }
 
-.mypage-edit-link:focus-visible {
+.mypage-edit-link:focus-visible,
+.mypage-password-link:focus-visible {
     outline: 3px solid rgb(52 199 89 / 25%);
     outline-offset: 2px;
 }
@@ -200,7 +204,13 @@ body {
         padding: 0 20px 24px;
     }
 
-    .mypage-edit-link {
+    .mypage-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .mypage-edit-link,
+    .mypage-password-link {
         width: 100%;
     }
 }

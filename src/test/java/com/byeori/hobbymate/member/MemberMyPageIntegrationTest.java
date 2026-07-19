@@ -73,7 +73,8 @@ class MemberMyPageIntegrationTest {
                 .andExpect(content().string(Matchers.containsString(
                         "src=\"/images/common/default-profile.png\"")))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("CI_HASH"))))
-                .andExpect(content().string(Matchers.not(Matchers.containsString("password"))));
+                .andExpect(content().string(Matchers.not(Matchers.containsString("name=\"password\""))))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("session-old-hash"))));
     }
 
     @Test

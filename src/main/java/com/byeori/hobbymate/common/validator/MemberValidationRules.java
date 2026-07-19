@@ -7,6 +7,8 @@ public final class MemberValidationRules {
 
     public static final int NICKNAME_MAX_LENGTH = 50;
     public static final int EMAIL_MAX_LENGTH = 255;
+    public static final int PASSWORD_MIN_LENGTH = 8;
+    public static final int PASSWORD_MAX_LENGTH = 255;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$");
@@ -31,6 +33,27 @@ public final class MemberValidationRules {
         return value != null
                 && value.length() <= EMAIL_MAX_LENGTH
                 && EMAIL_PATTERN.matcher(value).matches();
+    }
+
+    public static boolean isValidPassword(String value) {
+        return hasValidPasswordLengthAndWhitespace(value)
+                && hasRequiredPasswordCategories(value);
+    }
+
+    public static boolean hasValidPasswordLengthAndWhitespace(String value) {
+        return value != null
+                && value.length() >= PASSWORD_MIN_LENGTH
+                && value.length() <= PASSWORD_MAX_LENGTH
+                && value.chars().noneMatch(Character::isWhitespace);
+    }
+
+    public static boolean hasRequiredPasswordCategories(String value) {
+        if (value == null) return false;
+        int categories = 0;
+        if (value.matches(".*[A-Za-z].*")) categories++;
+        if (value.matches(".*\\d.*")) categories++;
+        if (value.matches(".*[^A-Za-z0-9\\s].*")) categories++;
+        return categories >= 2;
     }
 
     private static String trim(String value) {

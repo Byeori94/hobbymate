@@ -129,14 +129,10 @@ public class MemberJoinService {
     }
 
     private void validatePassword(String password) {
-        if (password == null || password.length() < 8 || password.length() > 255 || password.chars().anyMatch(Character::isWhitespace)) {
+        if (!MemberValidationRules.hasValidPasswordLengthAndWhitespace(password)) {
             throw new MemberJoinException("password", "비밀번호 형식을 확인해 주세요.");
         }
-        int categories = 0;
-        if (password.matches(".*[A-Za-z].*")) categories++;
-        if (password.matches(".*\\d.*")) categories++;
-        if (password.matches(".*[^A-Za-z0-9\\s].*")) categories++;
-        if (categories < 2) {
+        if (!MemberValidationRules.hasRequiredPasswordCategories(password)) {
             throw new MemberJoinException("password", "영문, 숫자, 특수문자 중 2종 이상을 사용해 주세요.");
         }
     }

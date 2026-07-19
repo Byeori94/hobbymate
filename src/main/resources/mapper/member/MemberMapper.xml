@@ -33,6 +33,13 @@
           AND MEMBER_STATUS = 'ACTIVE'
     </select>
 
+    <select id="findActivePasswordHashByMemberId" resultType="string">
+        SELECT PASSWORD
+        FROM HM_MEMBER
+        WHERE MEMBER_ID = #{memberId}
+          AND MEMBER_STATUS = 'ACTIVE'
+    </select>
+
     <select id="existsByLoginId" resultType="boolean">
         SELECT EXISTS (
             SELECT 1
@@ -97,6 +104,13 @@
         UPDATE HM_MEMBER
         SET NICKNAME = #{nickname},
             EMAIL = #{email}
+        WHERE MEMBER_ID = #{memberId}
+          AND MEMBER_STATUS = 'ACTIVE'
+    </update>
+
+    <update id="updateActiveMemberPassword">
+        UPDATE HM_MEMBER
+        SET PASSWORD = #{encodedPassword}
         WHERE MEMBER_ID = #{memberId}
           AND MEMBER_STATUS = 'ACTIVE'
     </update>

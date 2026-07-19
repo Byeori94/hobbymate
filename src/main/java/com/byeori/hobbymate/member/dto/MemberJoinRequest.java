@@ -10,6 +10,8 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import com.byeori.hobbymate.common.validator.MemberValidationRules;
+
 public class MemberJoinRequest {
 
     @NotBlank(message = "아이디를 입력해 주세요.")
@@ -17,7 +19,9 @@ public class MemberJoinRequest {
     private String loginId;
 
     @NotBlank(message = "비밀번호를 입력해 주세요.")
-    @Size(min = 8, max = 255, message = "비밀번호는 8자 이상 입력해 주세요.")
+    @Size(min = MemberValidationRules.PASSWORD_MIN_LENGTH,
+          max = MemberValidationRules.PASSWORD_MAX_LENGTH,
+          message = "비밀번호는 8자 이상 255자 이하로 입력해 주세요.")
     private String password;
 
     @NotBlank(message = "비밀번호 확인을 입력해 주세요.")
