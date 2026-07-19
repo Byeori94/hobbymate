@@ -32,6 +32,8 @@ class HobbyMateUserDetailsServiceTest {
         assertThat(user.getUsername()).isEqualTo("member1");
         assertThat(user).isInstanceOf(HobbyMateUserDetails.class);
         assertThat(((HobbyMateUserDetails) user).getNickname()).isEqualTo("취미회원");
+        assertThat(((HobbyMateUserDetails) user).getProfileImageUrl())
+                .isEqualTo("/member/profile/1/image");
         assertThat(user.getAuthorities()).extracting("authority")
                 .containsExactly("ROLE_USER");
     }
@@ -76,6 +78,13 @@ class HobbyMateUserDetailsServiceTest {
     }
 
     private MemberAuthInfo member(String loginId, String role, String status) {
-        return new MemberAuthInfo(1L, loginId, "$2a$10$hash", "취미회원", role, status);
+        return new MemberAuthInfo(
+                1L,
+                loginId,
+                "$2a$10$hash",
+                "취미회원",
+                "/member/profile/1/image",
+                role,
+                status);
     }
 }

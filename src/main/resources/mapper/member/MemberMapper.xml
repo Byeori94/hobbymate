@@ -10,6 +10,7 @@
                LOGIN_ID AS loginId,
                PASSWORD AS password,
                NICKNAME AS nickname,
+               PROFILE_IMAGE_URL AS profileImageUrl,
                MEMBER_ROLE AS memberRole,
                MEMBER_STATUS AS memberStatus
         FROM HM_MEMBER

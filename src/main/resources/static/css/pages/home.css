@@ -8,49 +8,6 @@ body {
     font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.site-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 72px;
-    padding: 10px max(24px, calc((100% - 1100px) / 2));
-    border-bottom: 1px solid #e1e4e8;
-}
-
-.brand-link img {
-    display: block;
-    width: 180px;
-    height: auto;
-}
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.header-actions form {
-    margin: 0;
-}
-
-.header-actions a,
-.header-actions button {
-    border: 0;
-    color: #229a43;
-    background: transparent;
-    font: inherit;
-    font-weight: 700;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.header-actions .primary-link {
-    padding: 9px 14px;
-    border-radius: 7px;
-    color: #fff;
-    background: #34c759;
-}
-
 .hero {
     min-height: calc(100vh - 72px);
     padding: 140px 24px;
@@ -67,19 +24,4 @@ body {
     margin: 0;
     color: #68727d;
     font-size: 18px;
-}
-
-@media (max-width: 600px) {
-    .site-header {
-        padding: 10px 16px;
-    }
-
-    .brand-link img {
-        width: 130px;
-    }
-
-    .header-actions {
-        gap: 8px;
-        font-size: 13px;
-    }
 }

@@ -5,6 +5,7 @@ public record MemberAuthInfo(
         String loginId,
         String password,
         String nickname,
+        String profileImageUrl,
         String memberRole,
         String memberStatus) {
 }

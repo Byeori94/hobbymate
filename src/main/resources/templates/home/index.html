@@ -6,26 +6,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>HobbyMate</title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
     <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
 </head>
 <body>
-<header class="site-header">
-    <a class="brand-link" th:href="@{/}">
-        <img th:src="@{/images/logo/hobbymate_logo_transparent.png}" alt="HobbyMate">
-    </a>
-    <nav aria-label="사용자 메뉴">
-        <div class="header-actions" sec:authorize="isAnonymous()">
-            <a th:href="@{/auth/login}">로그인</a>
-            <a class="primary-link" th:href="@{/auth/join}">회원가입</a>
-        </div>
-        <div class="header-actions" sec:authorize="isAuthenticated()">
-            <span><strong sec:authentication="principal.nickname">회원</strong>님</span>
-            <form th:action="@{/auth/logout}" method="post">
-                <button type="submit">로그아웃</button>
-            </form>
-        </div>
-    </nav>
-</header>
+<header th:replace="~{fragments/header :: header}"></header>
 <main class="hero">
     <h1>취미로 이어지는 우리, HobbyMate</h1>
     <p>관심사가 같은 사람들과 모임을 만들고 새로운 경험을 시작해 보세요.</p>

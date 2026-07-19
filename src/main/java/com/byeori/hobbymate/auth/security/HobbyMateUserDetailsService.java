@@ -48,6 +48,7 @@ public class HobbyMateUserDetailsService implements UserDetailsService {
                 member.loginId(),
                 member.password(),
                 member.nickname(),
+                member.profileImageUrl(),
                 authorities);
     }
 

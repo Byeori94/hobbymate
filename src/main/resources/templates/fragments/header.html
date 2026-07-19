@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<header class="site-header" th:fragment="header">
+    <a class="header-brand" th:href="@{/}" aria-label="HobbyMate 메인으로 이동">
+        <img th:src="@{/images/logo/hobbymate_logo_transparent.png}" alt="HobbyMate">
+    </a>
+
+    <nav class="header-nav" aria-label="사용자 메뉴">
+        <div class="header-actions" sec:authorize="isAnonymous()">
+            <a class="header-login-link" th:href="@{/auth/login}">로그인</a>
+            <a class="header-join-link" th:href="@{/auth/join}">회원가입</a>
+        </div>
+
+        <div class="profile-menu" sec:authorize="isAuthenticated()">
+            <button class="profile-menu-toggle"
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded="false">
+                <img class="profile-image"
+                     th:src="${#strings.isEmpty(#authentication.principal.profileImageUrl)} ? @{/images/common/default-profile.png} : @{${#authentication.principal.profileImageUrl}}"
+                     alt=""
+                     width="38"
+                     height="38">
+                <span class="profile-nickname">
+                    <span sec:authentication="principal.nickname">회원</span>님
+                </span>
+                <span class="profile-menu-arrow" aria-hidden="true">▼</span>
+            </button>
+
+            <div class="profile-dropdown" role="menu" hidden>
+                <a class="profile-dropdown-item" role="menuitem" th:href="@{/member/mypage}">
+                    마이페이지
+                </a>
+                <form class="profile-logout-form" th:action="@{/auth/logout}" method="post">
+                    <button class="profile-dropdown-item" type="submit" role="menuitem">
+                        로그아웃
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+</header>
+</body>
+</html>

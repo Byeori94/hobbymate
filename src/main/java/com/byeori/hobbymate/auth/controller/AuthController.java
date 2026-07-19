@@ -52,7 +52,7 @@ public class AuthController {
         model.addAttribute("loginError", error != null);
         model.addAttribute("logoutSuccess", logout != null);
         model.addAttribute("joinSuccess", joined != null);
-        return "/auth/login";
+        return "auth/login";
     }
 
     @GetMapping("/join")
@@ -61,7 +61,7 @@ public class AuthController {
             model.addAttribute("joinRequest", new MemberJoinRequest());
         }
         model.addAttribute("today", LocalDate.now());
-        return "/auth/join";
+        return "auth/join";
     }
 
     @PostMapping("/join")
@@ -79,7 +79,7 @@ public class AuthController {
         if (bindingResult.hasErrors()) {
             request.clearPasswords();
             model.addAttribute("today", LocalDate.now());
-            return "/auth/join";
+            return "auth/join";
         }
 
         try {
@@ -92,12 +92,12 @@ public class AuthController {
             }
             request.clearPasswords();
             model.addAttribute("today", LocalDate.now());
-            return "/auth/join";
+            return "auth/join";
         } catch (DataIntegrityViolationException ex) {
             bindingResult.reject("join.failed", "입력한 정보가 이미 사용 중이거나 저장할 수 없습니다.");
             request.clearPasswords();
             model.addAttribute("today", LocalDate.now());
-            return "/auth/join";
+            return "auth/join";
         }
 
         redirectAttributes.addFlashAttribute("joinSuccessMessage",

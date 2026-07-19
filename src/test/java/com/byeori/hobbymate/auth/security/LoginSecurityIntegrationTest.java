@@ -48,6 +48,13 @@ class LoginSecurityIntegrationTest {
                 .thenReturn(member("admin1", "correct-password", "ADMIN", "ACTIVE"));
         when(memberDao.findAuthByLoginId("withdrawn1"))
                 .thenReturn(member("withdrawn1", "correct-password", "USER", "WITHDRAWN"));
+        when(memberDao.findAuthByLoginId("profile1"))
+                .thenReturn(member(
+                        "profile1",
+                        "correct-password",
+                        "USER",
+                        "ACTIVE",
+                        "/member/profile/1/image"));
     }
 
     @Test
@@ -93,9 +100,48 @@ class LoginSecurityIntegrationTest {
                                 login.getRequest().getSession(false)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(
-                        "<strong>취미회원</strong>님")))
+                        "취미회원</span>님")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "src=\"/images/common/default-profile.png\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "aria-expanded=\"false\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "href=\"/member/mypage\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "action=\"/auth/logout\" method=\"post\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(
-                        org.hamcrest.Matchers.containsString("<strong>member1</strong>"))));
+                        org.hamcrest.Matchers.containsString(">member1</span>"))));
+    }
+
+    @Test
+    void anonymousHeaderDisplaysLoginAndJoinLinks() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "href=\"/auth/login\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "href=\"/auth/join\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("class=\"profile-menu\""))));
+    }
+
+    @Test
+    void authenticatedHeaderUsesStoredProfileImageUrlWhenPresent() throws Exception {
+        MvcResult login = mockMvc.perform(post("/auth/login")
+                        .with(csrf())
+                        .param("loginId", "profile1")
+                        .param("password", "correct-password"))
+                .andReturn();
+
+        mockMvc.perform(get("/")
+                        .session((org.springframework.mock.web.MockHttpSession)
+                                login.getRequest().getSession(false)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "src=\"/member/profile/1/image\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString(
+                                "src=\"/images/common/default-profile.png\""))));
     }
 
     @Test
@@ -200,11 +246,21 @@ class LoginSecurityIntegrationTest {
     }
 
     private MemberAuthInfo member(String loginId, String rawPassword, String role, String status) {
+        return member(loginId, rawPassword, role, status, null);
+    }
+
+    private MemberAuthInfo member(
+            String loginId,
+            String rawPassword,
+            String role,
+            String status,
+            String profileImageUrl) {
         return new MemberAuthInfo(
                 1L,
                 loginId,
                 passwordEncoder.encode(rawPassword),
                 "취미회원",
+                profileImageUrl,
                 role,
                 status);
     }

@@ -17,6 +17,7 @@ public class HobbyMateUserDetails implements UserDetails, Serializable {
     private final String loginId;
     private final String password;
     private final String nickname;
+    private final String profileImageUrl;
     private final List<GrantedAuthority> authorities;
 
     public HobbyMateUserDetails(
@@ -24,11 +25,13 @@ public class HobbyMateUserDetails implements UserDetails, Serializable {
             String loginId,
             String password,
             String nickname,
+            String profileImageUrl,
             Collection<? extends GrantedAuthority> authorities) {
         this.memberId = memberId;
         this.loginId = loginId;
         this.password = password;
         this.nickname = nickname;
+        this.profileImageUrl = profileImageUrl;
         this.authorities = List.copyOf(authorities);
     }
 
@@ -38,6 +41,10 @@ public class HobbyMateUserDetails implements UserDetails, Serializable {
 
     public String getNickname() {
         return nickname;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
     }
 
     @Override
