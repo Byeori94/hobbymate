@@ -49,6 +49,16 @@
         )
     </select>
 
+    <select id="existsNicknameExceptMember" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM HM_MEMBER
+            WHERE NICKNAME = #{nickname}
+              AND MEMBER_ID &lt;&gt; #{memberId}
+              AND MEMBER_STATUS &lt;&gt; 'WITHDRAWN'
+        )
+    </select>
+
     <select id="existsByEmail" resultType="boolean">
         SELECT EXISTS (
             SELECT 1
@@ -81,4 +91,13 @@
             'N'
         )
     </insert>
+
+    <update id="updateActiveMemberProfile"
+            parameterType="com.byeori.hobbymate.member.vo.MemberProfileUpdate">
+        UPDATE HM_MEMBER
+        SET NICKNAME = #{nickname},
+            EMAIL = #{email}
+        WHERE MEMBER_ID = #{memberId}
+          AND MEMBER_STATUS = 'ACTIVE'
+    </update>
 </mapper>

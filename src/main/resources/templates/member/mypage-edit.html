@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>회원정보 수정 | HobbyMate</title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/mypage-edit.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/pages/mypage-edit.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="edit-page">
+    <section class="edit-container" aria-labelledby="edit-title">
+        <div class="edit-heading">
+            <h1 id="edit-title">회원정보 수정</h1>
+            <p>변경할 정보를 입력해 주세요.</p>
+        </div>
+
+        <div class="edit-card">
+            <div class="profile-overview">
+                <img class="edit-profile-image"
+                     th:src="${#strings.isEmpty(member.profileImageUrl)} ? @{/images/common/default-profile.png} : @{${member.profileImageUrl}}"
+                     th:alt="${member.nickname == '-'} ? '기본 프로필 이미지' : |${member.nickname}님의 프로필 이미지|"
+                     width="104"
+                     height="104">
+                <div>
+                    <strong th:text="|${member.nickname}님|">벼리님</strong>
+                    <span th:text="|@${member.loginId}|">@byeori94</span>
+                </div>
+            </div>
+
+            <section class="readonly-section" aria-labelledby="readonly-title">
+                <h2 id="readonly-title">기본정보</h2>
+                <dl class="readonly-info">
+                    <div><dt>아이디</dt><dd th:text="${member.loginId}">byeori94</dd></div>
+                    <div><dt>이름</dt><dd th:text="${member.name}">최벼리</dd></div>
+                    <div>
+                        <dt>휴대폰 번호</dt>
+                        <dd>
+                            <span th:text="${member.maskedPhone}">010-****-1234</span>
+                            <small>휴대폰 번호 변경은 본인인증이 필요합니다.</small>
+                        </dd>
+                    </div>
+                    <div><dt>성별</dt><dd th:text="${member.gender}">여성</dd></div>
+                    <div><dt>생년월일</dt><dd th:text="${member.birthDate}">1994.03.10</dd></div>
+                </dl>
+            </section>
+
+            <form id="profile-edit-form"
+                  class="edit-form"
+                  th:action="@{/member/mypage/edit}"
+                  th:object="${updateForm}"
+                  th:data-check-nickname-url="@{/member/mypage/check-nickname}"
+                  th:data-original-nickname="${member.nickname}"
+                  method="post"
+                  novalidate>
+                <fieldset>
+                    <legend>수정정보</legend>
+
+                    <div class="form-alert" th:if="${#fields.hasGlobalErrors()}" role="alert">
+                        <p th:each="error : ${#fields.globalErrors()}" th:text="${error}">
+                            회원정보를 수정할 수 없습니다.
+                        </p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="nickname">닉네임 <span class="required" aria-label="필수">*</span></label>
+                        <div class="nickname-action">
+                            <input id="nickname"
+                                   type="text"
+                                   th:field="*{nickname}"
+                                   maxlength="50"
+                                   autocomplete="nickname"
+                                   aria-describedby="nickname-help nickname-status nickname-error"
+                                   required>
+                            <button id="nickname-check-button" type="button">중복 확인</button>
+                        </div>
+                        <p id="nickname-help" class="field-help">50자 이하로 입력해 주세요.</p>
+                        <p id="nickname-status" class="field-status" aria-live="polite"></p>
+                        <p id="nickname-error"
+                           class="field-error"
+                           th:if="${#fields.hasErrors('nickname')}"
+                           th:errors="*{nickname}">닉네임 오류</p>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="email">이메일 <span class="required" aria-label="필수">*</span></label>
+                        <input id="email"
+                               type="email"
+                               th:field="*{email}"
+                               maxlength="255"
+                               autocomplete="email"
+                               aria-describedby="email-help email-status email-error"
+                               required>
+                        <p id="email-help" class="field-help">알림을 받을 수 있는 이메일을 입력해 주세요.</p>
+                        <p id="email-status" class="field-status" aria-live="polite"></p>
+                        <p id="email-error"
+                           class="field-error"
+                           th:if="${#fields.hasErrors('email')}"
+                           th:errors="*{email}">이메일 오류</p>
+                    </div>
+                </fieldset>
+
+                <p id="submit-status" class="submit-status" aria-live="assertive"></p>
+                <div class="form-actions">
+                    <a class="cancel-button" th:href="@{/member/mypage}">취소</a>
+                    <button id="save-button" class="save-button" type="submit">저장</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+</body>
+</html>

@@ -1,7 +1,6 @@
 package com.byeori.hobbymate.member.service;
 
 import java.time.LocalDate;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -9,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.byeori.hobbymate.common.exception.MemberJoinException;
+import com.byeori.hobbymate.common.validator.MemberValidationRules;
 import com.byeori.hobbymate.member.dao.MemberDao;
 import com.byeori.hobbymate.member.dto.MemberJoinRequest;
 import com.byeori.hobbymate.member.vo.MemberRegistration;
@@ -17,8 +17,6 @@ import com.byeori.hobbymate.member.vo.MemberRegistration;
 public class MemberJoinService {
 
     private static final Pattern LOGIN_ID_PATTERN = Pattern.compile("^[a-z][a-z0-9]{4,19}$");
-    private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$");
     private static final Pattern PHONE_PATTERN = Pattern.compile("^010\\d{8}$");
 
     private final MemberDao memberDao;
@@ -36,16 +34,16 @@ public class MemberJoinService {
     }
 
     public boolean isNicknameAvailable(String nickname) {
-        String normalized = trim(nickname);
-        if (normalized == null || normalized.isBlank() || normalized.length() > 50) {
+        String normalized = MemberValidationRules.normalizeNickname(nickname);
+        if (!MemberValidationRules.isValidNickname(normalized)) {
             throw new MemberJoinException("nickname", "닉네임 형식을 확인해 주세요.");
         }
         return !memberDao.existsByNickname(normalized);
     }
 
     public boolean isEmailAvailable(String email) {
-        String normalized = normalizeEmail(email);
-        if (normalized == null || normalized.length() > 255 || !EMAIL_PATTERN.matcher(normalized).matches()) {
+        String normalized = MemberValidationRules.normalizeEmail(email);
+        if (!MemberValidationRules.isValidEmail(normalized)) {
             throw new MemberJoinException("email", "이메일 형식을 확인해 주세요.");
         }
         return !memberDao.existsByEmail(normalized);
@@ -84,8 +82,8 @@ public class MemberJoinService {
     private void normalize(MemberJoinRequest request) {
         request.setLoginId(normalizeLoginId(request.getLoginId()));
         request.setName(trim(request.getName()));
-        request.setNickname(trim(request.getNickname()));
-        request.setEmail(normalizeEmail(request.getEmail()));
+        request.setNickname(MemberValidationRules.normalizeNickname(request.getNickname()));
+        request.setEmail(MemberValidationRules.normalizeEmail(request.getEmail()));
         request.setPhone(normalizePhone(request.getPhone()));
     }
 
@@ -98,11 +96,10 @@ public class MemberJoinService {
         if (request.getName() == null || request.getName().isBlank() || request.getName().length() > 50) {
             throw new MemberJoinException("name", "이름 형식을 확인해 주세요.");
         }
-        if (request.getNickname() == null || request.getNickname().isBlank() || request.getNickname().length() > 50) {
+        if (!MemberValidationRules.isValidNickname(request.getNickname())) {
             throw new MemberJoinException("nickname", "닉네임 형식을 확인해 주세요.");
         }
-        if (request.getEmail() == null || request.getEmail().length() > 255
-                || !EMAIL_PATTERN.matcher(request.getEmail()).matches()) {
+        if (!MemberValidationRules.isValidEmail(request.getEmail())) {
             throw new MemberJoinException("email", "이메일 형식을 확인해 주세요.");
         }
         if (request.getPhone() == null || !PHONE_PATTERN.matcher(request.getPhone()).matches()) {
@@ -146,11 +143,6 @@ public class MemberJoinService {
 
     private String normalizeLoginId(String value) {
         return trim(value);
-    }
-
-    private String normalizeEmail(String value) {
-        String trimmed = trim(value);
-        return trimmed == null ? null : trimmed.toLowerCase(Locale.ROOT);
     }
 
     private String normalizePhone(String value) {

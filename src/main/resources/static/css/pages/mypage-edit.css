@@ -1,0 +1,361 @@
+:root {
+    --primary: #34c759;
+    --primary-dark: #229a43;
+    --primary-soft: #e8f9ed;
+    --border: #d9dee2;
+    --text: #33383f;
+    --muted: #68727d;
+    --danger: #c93636;
+    --success: #167a38;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    color: var(--text);
+    background: #f5f7f6;
+    font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+.edit-page {
+    padding: 48px 24px 80px;
+}
+
+.edit-container {
+    width: min(100%, 840px);
+    margin: 0 auto;
+}
+
+.edit-heading {
+    margin-bottom: 24px;
+}
+
+.edit-heading h1 {
+    margin: 0 0 8px;
+    color: #24292f;
+    font-size: clamp(28px, 4vw, 36px);
+}
+
+.edit-heading p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.edit-card {
+    overflow: hidden;
+    border: 1px solid #e1e4e8;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 12px 36px rgb(51 56 63 / 8%);
+}
+
+.profile-overview {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 28px 36px;
+    background: linear-gradient(135deg, #f2fcf5 0%, #fff 72%);
+}
+
+.edit-profile-image {
+    flex: 0 0 104px;
+    width: 104px;
+    height: 104px;
+    border: 4px solid #fff;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 5px 18px rgb(34 154 67 / 20%);
+}
+
+.profile-overview strong,
+.profile-overview span {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.profile-overview strong {
+    margin-bottom: 6px;
+    color: #24292f;
+    font-size: 25px;
+}
+
+.profile-overview span {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.readonly-section,
+.edit-form {
+    padding: 28px 36px;
+}
+
+.readonly-section {
+    border-bottom: 1px solid #eef0f2;
+}
+
+.readonly-section h2,
+.edit-form legend {
+    width: 100%;
+    margin: 0 0 20px;
+    padding: 0 0 10px;
+    border: 0;
+    border-bottom: 1px solid #e8eaed;
+    color: #24292f;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.readonly-info {
+    margin: 0;
+}
+
+.readonly-info > div {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 18px;
+    padding: 12px 4px;
+}
+
+.readonly-info dt {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.readonly-info dd {
+    min-width: 0;
+    margin: 0;
+    color: #24292f;
+    font-size: 15px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.readonly-info small {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.edit-form fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.form-field {
+    margin-bottom: 24px;
+}
+
+.form-field > label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.required {
+    color: var(--danger);
+}
+
+.nickname-action {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 108px;
+    gap: 9px;
+}
+
+input[type="text"],
+input[type="email"] {
+    width: 100%;
+    height: 46px;
+    padding: 0 13px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    background: #fff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgb(52 199 89 / 12%);
+}
+
+#nickname-check-button {
+    min-height: 46px;
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    color: var(--primary-dark);
+    background: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#nickname-check-button:hover {
+    background: var(--primary-soft);
+}
+
+#nickname-check-button:disabled,
+.save-button:disabled {
+    border-color: var(--border);
+    color: #8a929a;
+    background: #f2f4f5;
+    cursor: wait;
+}
+
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+    outline: 3px solid rgb(52 199 89 / 25%);
+    outline-offset: 2px;
+}
+
+.field-help,
+.field-status,
+.field-error,
+.submit-status {
+    min-height: 18px;
+    margin: 5px 0 0;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.field-help,
+.field-status {
+    color: var(--muted);
+}
+
+.field-status.is-success {
+    color: var(--success);
+}
+
+.field-status.is-error,
+.field-error,
+.submit-status {
+    color: var(--danger);
+}
+
+.form-alert {
+    margin-bottom: 22px;
+    padding: 12px 14px;
+    border: 1px solid #efb8b8;
+    border-radius: 8px;
+    color: #8f2525;
+    background: #fff6f6;
+    font-size: 13px;
+}
+
+.form-alert p {
+    margin: 0;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 28px;
+}
+
+.cancel-button,
+.save-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 112px;
+    min-height: 46px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.cancel-button {
+    border: 1px solid var(--border);
+    color: var(--text);
+    background: #fff;
+}
+
+.cancel-button:hover {
+    background: #f2f4f5;
+}
+
+.save-button {
+    border: 1px solid var(--primary);
+    color: #fff;
+    background: var(--primary);
+    cursor: pointer;
+}
+
+.save-button:hover {
+    background: var(--primary-dark);
+}
+
+@media (max-width: 600px) {
+    .edit-page {
+        padding: 34px 16px 56px;
+    }
+
+    .edit-card {
+        border-radius: 15px;
+    }
+
+    .profile-overview {
+        flex-direction: column;
+        gap: 14px;
+        padding: 26px 20px;
+        text-align: center;
+    }
+
+    .edit-profile-image {
+        flex-basis: 92px;
+        width: 92px;
+        height: 92px;
+    }
+
+    .readonly-section,
+    .edit-form {
+        padding: 24px 20px;
+    }
+
+    .readonly-info > div,
+    .nickname-action {
+        grid-template-columns: 1fr;
+    }
+
+    .readonly-info > div {
+        gap: 6px;
+        padding: 11px 0;
+    }
+
+    .nickname-action {
+        gap: 8px;
+    }
+
+    #nickname-check-button {
+        width: 100%;
+    }
+
+    .form-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .cancel-button,
+    .save-button {
+        width: 100%;
+        min-width: 0;
+    }
+}

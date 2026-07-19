@@ -17,6 +17,10 @@
             <p>내 기본정보를 확인할 수 있습니다.</p>
         </div>
 
+        <div class="mypage-message" th:if="${successMessage}" role="status" th:text="${successMessage}">
+            회원정보가 수정되었습니다.
+        </div>
+
         <article class="profile-card">
             <div class="profile-summary">
                 <img class="mypage-profile-image"
@@ -56,6 +60,9 @@
                     <dd th:text="${member.joinedDate}">2026.07.19</dd>
                 </div>
             </dl>
+            <div class="mypage-actions">
+                <a class="mypage-edit-link" th:href="@{/member/mypage/edit}">회원정보 수정</a>
+            </div>
         </article>
     </section>
 </main>
