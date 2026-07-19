@@ -20,7 +20,9 @@
                     aria-haspopup="menu"
                     aria-expanded="false">
                 <img class="profile-image"
-                     th:src="${#strings.isEmpty(#authentication.principal.profileImageUrl)} ? @{/images/common/default-profile.png} : @{${#authentication.principal.profileImageUrl}}"
+                     data-profile-image-fallback
+                     th:src="${#strings.isEmpty(#authentication.principal.profileImageUrl)} ? @{/images/common/default-profile.png} : @{/profile-images/{fileName}(fileName=${#authentication.principal.profileImageUrl})}"
+                     th:attr="data-default-src=@{/images/common/default-profile.png}"
                      alt=""
                      width="38"
                      height="38">

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.byeori.hobbymate.auth.security.HobbyMateUserDetails;
 import com.byeori.hobbymate.common.exception.MemberProfileUpdateException;
@@ -251,6 +252,44 @@ public class MemberMyPageController {
         }
     }
 
+    @PostMapping("/mypage/profile-image")
+    public String updateProfileImage(
+            @AuthenticationPrincipal HobbyMateUserDetails userDetails,
+            Authentication authentication,
+            @RequestParam("profileImage") MultipartFile profileImage,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+        if (!isExpectedAuthentication(userDetails, authentication)) {
+            clearInvalidAuthentication(request);
+            return "redirect:/auth/login";
+        }
+
+        String storedFileName = memberMyPageService.updateProfileImage(
+                userDetails.getMemberId(), profileImage);
+        updateAuthenticationPrincipal(
+                userDetails.withProfileImageUrl(storedFileName), authentication, request);
+        redirectAttributes.addFlashAttribute("successMessage", "프로필 사진이 저장되었습니다.");
+        return "redirect:/member/mypage";
+    }
+
+    @PostMapping("/mypage/profile-image/delete")
+    public String deleteProfileImage(
+            @AuthenticationPrincipal HobbyMateUserDetails userDetails,
+            Authentication authentication,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+        if (!isExpectedAuthentication(userDetails, authentication)) {
+            clearInvalidAuthentication(request);
+            return "redirect:/auth/login";
+        }
+
+        memberMyPageService.deleteProfileImage(userDetails.getMemberId());
+        updateAuthenticationPrincipal(
+                userDetails.withProfileImageUrl(null), authentication, request);
+        redirectAttributes.addFlashAttribute("successMessage", "기본 프로필 사진으로 변경되었습니다.");
+        return "redirect:/member/mypage";
+    }
+
     private String restoreEditForm(
             HobbyMateUserDetails userDetails,
             HttpServletRequest request,
@@ -280,6 +319,13 @@ public class MemberMyPageController {
             String nickname,
             HttpServletRequest request) {
         HobbyMateUserDetails updatedPrincipal = userDetails.withNickname(nickname);
+        updateAuthenticationPrincipal(updatedPrincipal, authentication, request);
+    }
+
+    private void updateAuthenticationPrincipal(
+            HobbyMateUserDetails updatedPrincipal,
+            Authentication authentication,
+            HttpServletRequest request) {
         UsernamePasswordAuthenticationToken updatedAuthentication =
                 UsernamePasswordAuthenticationToken.authenticated(
                         updatedPrincipal,

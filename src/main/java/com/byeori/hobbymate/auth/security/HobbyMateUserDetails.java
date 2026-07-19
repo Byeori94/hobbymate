@@ -57,6 +57,16 @@ public class HobbyMateUserDetails implements UserDetails, Serializable {
                 authorities);
     }
 
+    public HobbyMateUserDetails withProfileImageUrl(String updatedProfileImageUrl) {
+        return new HobbyMateUserDetails(
+                memberId,
+                loginId,
+                password,
+                nickname,
+                updatedProfileImageUrl,
+                authorities);
+    }
+
     @Override
     public String getUsername() {
         return loginId;

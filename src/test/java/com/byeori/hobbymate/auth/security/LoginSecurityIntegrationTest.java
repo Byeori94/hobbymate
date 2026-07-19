@@ -54,7 +54,7 @@ class LoginSecurityIntegrationTest {
                         "correct-password",
                         "USER",
                         "ACTIVE",
-                        "/member/profile/1/image"));
+                        "11111111-1111-4111-8111-111111111111.jpg"));
     }
 
     @Test
@@ -126,7 +126,7 @@ class LoginSecurityIntegrationTest {
     }
 
     @Test
-    void authenticatedHeaderUsesStoredProfileImageUrlWhenPresent() throws Exception {
+    void authenticatedHeaderBuildsProfileImageUrlFromStoredFileName() throws Exception {
         MvcResult login = mockMvc.perform(post("/auth/login")
                         .with(csrf())
                         .param("loginId", "profile1")
@@ -138,10 +138,9 @@ class LoginSecurityIntegrationTest {
                                 login.getRequest().getSession(false)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(
-                        "src=\"/member/profile/1/image\"")))
-                .andExpect(content().string(org.hamcrest.Matchers.not(
-                        org.hamcrest.Matchers.containsString(
-                                "src=\"/images/common/default-profile.png\""))));
+                        "src=\"/profile-images/11111111-1111-4111-8111-111111111111.jpg\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "data-default-src=\"/images/common/default-profile.png\"")));
     }
 
     @Test

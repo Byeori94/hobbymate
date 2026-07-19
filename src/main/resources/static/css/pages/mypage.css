@@ -46,6 +46,12 @@ body {
     font-weight: 650;
 }
 
+.mypage-message-error {
+    border-color: #efb5b5;
+    color: #a52f2f;
+    background: #fff4f4;
+}
+
 .profile-card {
     overflow: hidden;
     border: 1px solid #e1e4e8;
@@ -85,6 +91,152 @@ body {
     color: #68727d;
     font-size: 15px;
     overflow-wrap: anywhere;
+}
+
+.profile-image-management {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px 24px;
+    padding: 24px 36px;
+    border-top: 1px solid #eef0f2;
+    border-bottom: 1px solid #eef0f2;
+    background: #fbfcfb;
+}
+
+.profile-image-copy {
+    grid-column: 1 / -1;
+}
+
+.profile-image-copy h2 {
+    margin: 0 0 6px;
+    color: #24292f;
+    font-size: 18px;
+}
+
+.profile-image-copy p {
+    margin: 0;
+    color: #68727d;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.profile-image-upload-form {
+    min-width: 0;
+}
+
+.profile-file-control {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 10px;
+}
+
+.profile-file-label {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 1px solid #a9dfb8;
+    border-radius: 8px;
+    color: #167a38;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.profile-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.profile-file-input:focus-visible + .profile-file-name,
+.profile-file-label:focus-within {
+    outline: 3px solid rgb(52 199 89 / 25%);
+    outline-offset: 2px;
+}
+
+.profile-file-name {
+    min-width: 0;
+    overflow: hidden;
+    color: #59636e;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-file-error {
+    min-height: 20px;
+    margin: 6px 0 0;
+    color: #b43333;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.profile-image-buttons {
+    margin-top: 8px;
+}
+
+.profile-image-save,
+.profile-image-delete {
+    min-height: 40px;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.profile-image-save {
+    border: 1px solid #34c759;
+    color: #fff;
+    background: #34c759;
+}
+
+.profile-image-save:hover:not(:disabled) {
+    background: #229a43;
+}
+
+.profile-image-save:disabled,
+.profile-image-delete:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.profile-image-delete-form {
+    align-self: end;
+    margin: 0;
+}
+
+.profile-image-delete {
+    border: 1px solid #d68585;
+    color: #a52f2f;
+    background: #fff;
+}
+
+.profile-image-delete:hover:not(:disabled) {
+    background: #fff4f4;
+}
+
+.profile-file-label:hover {
+    background: #f2fcf5;
+}
+
+.profile-image-save:focus-visible,
+.profile-image-delete:focus-visible,
+.profile-file-label:focus-visible {
+    outline: 3px solid rgb(52 199 89 / 25%);
+    outline-offset: 2px;
 }
 
 .member-info {
@@ -237,6 +389,32 @@ body {
 
     .member-info {
         padding: 8px 20px 18px;
+    }
+
+    .profile-image-management {
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 22px 20px;
+    }
+
+    .profile-file-control {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .profile-file-label,
+    .profile-image-save,
+    .profile-image-delete {
+        width: 100%;
+    }
+
+    .profile-file-name {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .profile-image-delete-form {
+        width: 100%;
     }
 
     .member-info-row {

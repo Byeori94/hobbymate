@@ -7,6 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/common/header.css}">
     <link rel="stylesheet" th:href="@{/css/pages/mypage.css}">
     <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/pages/mypage.js}"></script>
 </head>
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
@@ -20,11 +21,20 @@
         <div class="mypage-message" th:if="${successMessage}" role="status" th:text="${successMessage}">
             회원정보가 수정되었습니다.
         </div>
+        <div class="mypage-message mypage-message-error"
+             th:if="${errorMessage}"
+             role="alert"
+             th:text="${errorMessage}">
+            프로필 사진을 확인해 주세요.
+        </div>
 
         <article class="profile-card">
             <div class="profile-summary">
                 <img class="mypage-profile-image"
-                     th:src="${#strings.isEmpty(member.profileImageUrl)} ? @{/images/common/default-profile.png} : @{${member.profileImageUrl}}"
+                     id="profile-image-preview"
+                     data-profile-image-fallback
+                     th:src="${#strings.isEmpty(member.profileImageUrl)} ? @{/images/common/default-profile.png} : @{/profile-images/{fileName}(fileName=${member.profileImageUrl})}"
+                     th:attr="data-original-src=${#strings.isEmpty(member.profileImageUrl)} ? @{/images/common/default-profile.png} : @{/profile-images/{fileName}(fileName=${member.profileImageUrl})},data-default-src=@{/images/common/default-profile.png}"
                      th:alt="${member.nickname == '-'} ? '기본 프로필 이미지' : |${member.nickname}님의 프로필 이미지|"
                      width="112"
                      height="112">
@@ -33,6 +43,40 @@
                     <p th:text="|@${member.loginId}|">@byeori94</p>
                 </div>
             </div>
+
+            <section class="profile-image-management" aria-labelledby="profile-image-title">
+                <div class="profile-image-copy">
+                    <h2 id="profile-image-title">프로필 사진</h2>
+                    <p>JPG, JPEG, PNG, WEBP 형식의 이미지를 등록할 수 있습니다. 최대 5MB입니다.</p>
+                </div>
+
+                <form class="profile-image-upload-form"
+                      th:action="@{/member/mypage/profile-image}"
+                      method="post"
+                      enctype="multipart/form-data">
+                    <div class="profile-file-control">
+                        <label class="profile-file-label" for="profileImage">사진 선택</label>
+                        <input class="profile-file-input"
+                               type="file"
+                               id="profileImage"
+                               name="profileImage"
+                               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                        <span class="profile-file-name" aria-live="polite">선택된 파일 없음</span>
+                    </div>
+                    <p class="profile-file-error" aria-live="assertive"></p>
+                    <div class="profile-image-buttons">
+                        <button class="profile-image-save" type="submit" disabled>사진 저장</button>
+                    </div>
+                </form>
+
+                <form class="profile-image-delete-form"
+                      th:if="${!#strings.isEmpty(member.profileImageUrl)}"
+                      th:action="@{/member/mypage/profile-image/delete}"
+                      method="post"
+                      data-confirm-message="프로필 사진을 삭제하고 기본 이미지로 변경하시겠습니까?">
+                    <button class="profile-image-delete" type="submit">사진 삭제</button>
+                </form>
+            </section>
 
             <dl class="member-info" aria-label="회원 기본정보">
                 <div class="member-info-row">

@@ -4,14 +4,22 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.byeori.hobbymate.common.exception.InvalidProfileImageException;
 import com.byeori.hobbymate.common.exception.MemberProfileUpdateException;
 import com.byeori.hobbymate.common.exception.MemberPasswordChangeException;
 import com.byeori.hobbymate.common.exception.MemberWithdrawalException;
+import com.byeori.hobbymate.common.exception.ProfileImageProcessingException;
 import com.byeori.hobbymate.common.validator.MemberValidationRules;
+import com.byeori.hobbymate.file.storage.ProfileImageStorage;
 import com.byeori.hobbymate.member.dao.MemberDao;
 import com.byeori.hobbymate.member.dto.MemberMyPageResponse;
 import com.byeori.hobbymate.member.dto.MemberPasswordChangeRequest;
@@ -24,15 +32,21 @@ import com.byeori.hobbymate.member.vo.MemberProfileUpdate;
 @Service
 public class MemberMyPageService {
 
+    private static final Logger log = LoggerFactory.getLogger(MemberMyPageService.class);
     private static final String EMPTY_VALUE = "-";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 
     private final MemberDao memberDao;
     private final PasswordEncoder passwordEncoder;
+    private final ProfileImageStorage profileImageStorage;
 
-    public MemberMyPageService(MemberDao memberDao, PasswordEncoder passwordEncoder) {
+    public MemberMyPageService(
+            MemberDao memberDao,
+            PasswordEncoder passwordEncoder,
+            ProfileImageStorage profileImageStorage) {
         this.memberDao = memberDao;
         this.passwordEncoder = passwordEncoder;
+        this.profileImageStorage = profileImageStorage;
     }
 
     @Transactional(readOnly = true)
@@ -146,6 +160,107 @@ public class MemberMyPageService {
         if (memberDao.withdrawActiveMember(memberId) != 1) {
             throw new MemberWithdrawalException(null, "회원 탈퇴를 처리할 수 없습니다.");
         }
+    }
+
+    @Transactional
+    public String updateProfileImage(Long memberId, MultipartFile profileImage) {
+        MemberMyPageInfo current = requireActiveMemberForProfileImage(memberId);
+        String previousFileName = blankToNull(current.profileImageUrl());
+        String newFileName = profileImageStorage.store(profileImage);
+
+        try {
+            if (memberDao.updateActiveMemberProfileImage(memberId, newFileName) != 1) {
+                throw new ProfileImageProcessingException("프로필 사진을 저장할 수 없습니다.");
+            }
+        } catch (RuntimeException ex) {
+            deleteCompensationFile(newFileName, memberId);
+            if (ex instanceof ProfileImageProcessingException) {
+                throw ex;
+            }
+            throw new ProfileImageProcessingException("프로필 사진을 저장할 수 없습니다.", ex);
+        }
+
+        arrangeAfterTransaction(newFileName, previousFileName, memberId);
+        return newFileName;
+    }
+
+    @Transactional
+    public void deleteProfileImage(Long memberId) {
+        MemberMyPageInfo current = requireActiveMemberForProfileImage(memberId);
+        String previousFileName = blankToNull(current.profileImageUrl());
+        if (previousFileName == null) {
+            throw new InvalidProfileImageException("등록된 프로필 사진이 없습니다.");
+        }
+        if (memberDao.updateActiveMemberProfileImage(memberId, null) != 1) {
+            throw new ProfileImageProcessingException("프로필 사진을 삭제할 수 없습니다.");
+        }
+        deleteAfterCommit(previousFileName, memberId);
+    }
+
+    private void arrangeAfterTransaction(
+            String newFileName,
+            String previousFileName,
+            Long memberId) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            deletePreviousFile(previousFileName, memberId);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                deletePreviousFile(previousFileName, memberId);
+            }
+
+            @Override
+            public void afterCompletion(int status) {
+                if (status != TransactionSynchronization.STATUS_COMMITTED) {
+                    deleteCompensationFile(newFileName, memberId);
+                }
+            }
+        });
+    }
+
+    private void deleteAfterCommit(String previousFileName, Long memberId) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            deletePreviousFile(previousFileName, memberId);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                deletePreviousFile(previousFileName, memberId);
+            }
+        });
+    }
+
+    private void deletePreviousFile(String fileName, Long memberId) {
+        if (fileName == null) {
+            return;
+        }
+        try {
+            profileImageStorage.delete(fileName);
+        } catch (ProfileImageProcessingException ex) {
+            log.warn("프로필 이미지 이전 파일 삭제 실패: memberId={}", memberId);
+        }
+    }
+
+    private void deleteCompensationFile(String fileName, Long memberId) {
+        try {
+            profileImageStorage.delete(fileName);
+        } catch (ProfileImageProcessingException ex) {
+            log.warn("프로필 이미지 보상 파일 삭제 실패: memberId={}", memberId);
+        }
+    }
+
+    private MemberMyPageInfo requireActiveMemberForProfileImage(Long memberId) {
+        if (memberId == null) {
+            throw new ProfileImageProcessingException("회원정보를 찾을 수 없습니다.");
+        }
+        MemberMyPageInfo member = memberDao.findActiveMemberForMyPage(memberId);
+        if (member == null) {
+            throw new ProfileImageProcessingException("회원정보를 찾을 수 없습니다.");
+        }
+        return member;
     }
 
     private MemberMyPageInfo requireActiveMember(Long memberId) {

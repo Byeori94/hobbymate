@@ -33,7 +33,7 @@ class HobbyMateUserDetailsServiceTest {
         assertThat(user).isInstanceOf(HobbyMateUserDetails.class);
         assertThat(((HobbyMateUserDetails) user).getNickname()).isEqualTo("취미회원");
         assertThat(((HobbyMateUserDetails) user).getProfileImageUrl())
-                .isEqualTo("/member/profile/1/image");
+                .isEqualTo("11111111-1111-4111-8111-111111111111.jpg");
         assertThat(user.getAuthorities()).extracting("authority")
                 .containsExactly("ROLE_USER");
     }
@@ -83,7 +83,7 @@ class HobbyMateUserDetailsServiceTest {
                 loginId,
                 "$2a$10$hash",
                 "취미회원",
-                "/member/profile/1/image",
+                "11111111-1111-4111-8111-111111111111.jpg",
                 role,
                 status);
     }

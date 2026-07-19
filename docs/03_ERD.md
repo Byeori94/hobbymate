@@ -305,6 +305,8 @@ erDiagram
 - 일반 회원 탈퇴 시 `CI_HASH`를 `NULL`로 변경한다. MariaDB의 UNIQUE 인덱스는 여러 개의 `NULL`을 허용하므로 탈퇴 회원이 여러 명이어도 충돌하지 않는다.
 - 탈퇴 회원의 `LOGIN_ID`는 유지하여 재사용을 허용하지 않는다.
 - 탈퇴 회원의 `NICKNAME`과 `EMAIL`은 탈퇴용 값으로 변경하여 기존 값을 다시 사용할 수 있게 한다.
+- `HM_MEMBER.PROFILE_IMAGE_URL`은 기존 컬럼명을 유지하지만 전체 URL이 아닌 UUID 기반 프로필 이미지 저장 파일명만 보관한다. 미등록·삭제 상태는 `NULL`이며 기본 이미지 경로는 저장하지 않는다.
+- 프로필 이미지 원본 파일은 외부 파일 시스템에 저장하고 회원 탈퇴 시 컬럼 값과 실제 파일을 유지한다.
 - 탈퇴 후 재가입하면 기존 회원을 복구하지 않고 새로운 `MEMBER_ID`를 발급한다.
 - `HM_REPORT.TARGET_ID`와 `HM_ADMIN_ACTION_HISTORY.TARGET_ID`는 여러 테이블의 PK를 가리키는 다형 대상이므로 물리 FK를 설정하지 않는다.
 - `HM_REPORT.TARGET_TYPE + TARGET_ID`와 `HM_ADMIN_ACTION_HISTORY.TARGET_TYPE + TARGET_ID`의 유효성은 서비스 계층에서 검증한다.

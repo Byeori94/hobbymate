@@ -1,4 +1,14 @@
 (() => {
+    document.querySelectorAll("[data-profile-image-fallback]").forEach((image) => {
+        image.addEventListener("error", () => {
+            const defaultSource = image.dataset.defaultSrc;
+            image.removeAttribute("data-profile-image-fallback");
+            if (defaultSource && image.src !== defaultSource) {
+                image.src = defaultSource;
+            }
+        }, { once: true });
+    });
+
     const menus = document.querySelectorAll(".profile-menu");
 
     const closeMenu = (menu, restoreFocus = false) => {

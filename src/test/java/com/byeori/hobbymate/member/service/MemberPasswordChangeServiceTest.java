@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.byeori.hobbymate.common.exception.MemberPasswordChangeException;
+import com.byeori.hobbymate.file.storage.ProfileImageStorage;
 import com.byeori.hobbymate.member.dao.MemberDao;
 import com.byeori.hobbymate.member.dto.MemberPasswordChangeRequest;
 
@@ -29,11 +30,14 @@ class MemberPasswordChangeServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private ProfileImageStorage profileImageStorage;
+
     private MemberMyPageService service;
 
     @BeforeEach
     void setUp() {
-        service = new MemberMyPageService(memberDao, passwordEncoder);
+        service = new MemberMyPageService(memberDao, passwordEncoder, profileImageStorage);
     }
 
     @Test
