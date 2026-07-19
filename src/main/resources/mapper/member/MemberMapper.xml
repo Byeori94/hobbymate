@@ -114,4 +114,15 @@
         WHERE MEMBER_ID = #{memberId}
           AND MEMBER_STATUS = 'ACTIVE'
     </update>
+
+    <update id="withdrawActiveMember">
+        UPDATE HM_MEMBER
+        SET NICKNAME = CONCAT('탈퇴회원', MEMBER_ID),
+            EMAIL = CONCAT('deleted_', MEMBER_ID, '@hobbymate.local'),
+            CI_HASH = NULL,
+            MEMBER_STATUS = 'WITHDRAWN',
+            WITHDRAWN_AT = CURRENT_TIMESTAMP
+        WHERE MEMBER_ID = #{memberId}
+          AND MEMBER_STATUS = 'ACTIVE'
+    </update>
 </mapper>

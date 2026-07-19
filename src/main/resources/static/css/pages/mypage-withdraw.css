@@ -1,0 +1,66 @@
+:root {
+    --border: #d9dee2;
+    --text: #33383f;
+    --muted: #68727d;
+    --danger: #bd3c3c;
+    --danger-dark: #962d2d;
+    --danger-soft: #fff5f5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    color: var(--text);
+    background: #f5f7f6;
+    font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button, input { font: inherit; }
+.withdraw-page { padding: 48px 24px 80px; }
+.withdraw-container { width: min(100%, 680px); margin: 0 auto; }
+.withdraw-heading { margin-bottom: 24px; }
+.withdraw-heading h1 { margin: 0 0 8px; color: #24292f; font-size: clamp(28px, 4vw, 36px); }
+.withdraw-heading p { margin: 0; color: var(--muted); }
+
+.withdraw-card {
+    overflow: hidden;
+    border: 1px solid #e1e4e8;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 12px 36px rgb(51 56 63 / 8%);
+}
+
+.withdraw-notice { padding: 28px 36px; border-bottom: 1px solid #eee4e4; background: #fffafa; }
+.withdraw-notice h2 { margin: 0 0 14px; color: #4b3030; font-size: 18px; }
+.withdraw-notice ul { margin: 0; padding-left: 21px; color: #675b5b; font-size: 14px; line-height: 1.8; }
+.withdraw-form { padding: 32px 36px; }
+.form-field { margin-bottom: 24px; }
+.form-field > label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 700; }
+.form-field > label span { color: var(--danger); }
+.password-input-wrap { position: relative; }
+.password-input-wrap input { width: 100%; height: 48px; padding: 0 70px 0 13px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); }
+.password-input-wrap input:focus { border-color: var(--danger); box-shadow: 0 0 0 3px rgb(189 60 60 / 10%); }
+#password-toggle { position: absolute; top: 50%; right: 8px; min-width: 52px; min-height: 34px; padding: 4px 8px; border: 0; border-radius: 6px; color: #7d3434; background: #fff0f0; font-size: 12px; font-weight: 700; cursor: pointer; transform: translateY(-50%); }
+.consent-field { display: flex; align-items: flex-start; gap: 10px; padding: 16px; border: 1px solid #ead7d7; border-radius: 9px; background: var(--danger-soft); }
+.consent-field input { flex: 0 0 auto; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--danger); }
+.consent-field label { color: #4f4141; font-size: 14px; line-height: 1.55; cursor: pointer; }
+.field-error, .submit-status { min-height: 18px; margin: 6px 0 0; color: var(--danger); font-size: 12px; overflow-wrap: anywhere; }
+.form-alert { margin-bottom: 22px; padding: 12px 14px; border: 1px solid #efb8b8; border-radius: 8px; color: #8f2525; background: #fff6f6; font-size: 13px; }
+.form-alert p { margin: 0; }
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px; }
+.cancel-button, .withdraw-button { display: inline-flex; align-items: center; justify-content: center; min-width: 124px; min-height: 46px; padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: 700; text-decoration: none; }
+.cancel-button { border: 1px solid var(--border); color: var(--text); background: #fff; }
+.cancel-button:hover { background: #f2f4f5; }
+.withdraw-button { border: 1px solid var(--danger); color: #fff; background: var(--danger); cursor: pointer; }
+.withdraw-button:hover { background: var(--danger-dark); }
+.withdraw-button:disabled { border-color: var(--border); color: #8a929a; background: #f2f4f5; cursor: wait; }
+input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid rgb(189 60 60 / 20%); outline-offset: 2px; }
+
+@media (max-width: 600px) {
+    .withdraw-page { padding: 34px 16px 56px; }
+    .withdraw-card { border-radius: 15px; }
+    .withdraw-notice, .withdraw-form { padding: 24px 20px; }
+    .form-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .cancel-button, .withdraw-button { width: 100%; min-width: 0; }
+}

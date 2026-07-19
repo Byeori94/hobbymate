@@ -156,6 +156,51 @@ body {
     outline-offset: 2px;
 }
 
+.danger-zone {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 24px;
+    padding: 22px 26px;
+    border: 1px solid #ead7d7;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.danger-zone h2 {
+    margin: 0 0 6px;
+    color: #4b3030;
+    font-size: 17px;
+}
+
+.danger-zone p {
+    margin: 0;
+    color: #746767;
+    font-size: 13px;
+}
+
+.mypage-withdraw-link {
+    flex: 0 0 auto;
+    padding: 9px 14px;
+    border: 1px solid #cf6666;
+    border-radius: 8px;
+    color: #a52f2f;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.mypage-withdraw-link:hover {
+    background: #fff4f4;
+}
+
+.mypage-withdraw-link:focus-visible {
+    outline: 3px solid rgb(201 54 54 / 20%);
+    outline-offset: 2px;
+}
+
 @media (max-width: 600px) {
     .mypage {
         padding: 36px 16px 56px;
@@ -212,5 +257,16 @@ body {
     .mypage-edit-link,
     .mypage-password-link {
         width: 100%;
+    }
+
+    .danger-zone {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px;
+    }
+
+    .mypage-withdraw-link {
+        text-align: center;
     }
 }

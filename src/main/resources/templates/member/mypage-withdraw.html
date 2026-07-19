@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>회원 탈퇴 | HobbyMate</title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/mypage-withdraw.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/pages/mypage-withdraw.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="withdraw-page">
+    <section class="withdraw-container" aria-labelledby="withdraw-title">
+        <div class="withdraw-heading">
+            <h1 id="withdraw-title">회원 탈퇴</h1>
+            <p>회원 탈퇴 전에 아래 내용을 꼭 확인해 주세요.</p>
+        </div>
+
+        <div class="withdraw-card">
+            <section class="withdraw-notice" aria-labelledby="notice-title">
+                <h2 id="notice-title">탈퇴 시 유의사항</h2>
+                <ul>
+                    <li>탈퇴한 아이디는 다시 사용할 수 없습니다.</li>
+                    <li>탈퇴 후 기존 계정으로 로그인하거나 계정을 복구할 수 없습니다.</li>
+                    <li>작성한 게시글과 댓글은 자동으로 삭제되지 않습니다.</li>
+                    <li>기존 닉네임과 이메일은 다른 가입에서 다시 사용할 수 있습니다.</li>
+                    <li>본인인증을 다시 진행하면 새로운 아이디로 즉시 재가입할 수 있습니다.</li>
+                </ul>
+            </section>
+
+            <form id="withdraw-form"
+                  class="withdraw-form"
+                  th:action="@{/member/mypage/withdraw}"
+                  th:object="${withdrawForm}"
+                  method="post"
+                  novalidate>
+                <div class="form-alert" th:if="${#fields.hasGlobalErrors()}" role="alert">
+                    <p th:each="error : ${#fields.globalErrors()}" th:text="${error}">
+                        회원 탈퇴를 처리할 수 없습니다.
+                    </p>
+                </div>
+
+                <div class="form-field">
+                    <label for="currentPassword">현재 비밀번호 <span aria-label="필수">*</span></label>
+                    <div class="password-input-wrap">
+                        <input id="currentPassword"
+                               name="currentPassword"
+                               type="password"
+                               maxlength="255"
+                               autocomplete="current-password"
+                               required
+                               th:attr="aria-invalid=${#fields.hasErrors('currentPassword')}"
+                               aria-describedby="currentPassword-error">
+                        <button id="password-toggle" type="button"
+                                aria-label="현재 비밀번호 표시" aria-pressed="false">표시</button>
+                    </div>
+                    <p id="currentPassword-error" class="field-error"
+                       th:if="${#fields.hasErrors('currentPassword')}"
+                       th:errors="*{currentPassword}">현재 비밀번호 오류</p>
+                </div>
+
+                <div class="consent-field">
+                    <input id="withdrawAgreed" type="checkbox" th:field="*{withdrawAgreed}" required>
+                    <label for="withdrawAgreed">
+                        회원 탈퇴 시 유의사항을 확인했으며 계정을 탈퇴하는 데 동의합니다.
+                    </label>
+                </div>
+                <p id="withdrawAgreed-error" class="field-error"
+                   th:if="${#fields.hasErrors('withdrawAgreed')}"
+                   th:errors="*{withdrawAgreed}">탈퇴 동의 오류</p>
+
+                <p id="submit-status" class="submit-status" aria-live="assertive"></p>
+                <div class="form-actions">
+                    <a class="cancel-button" th:href="@{/member/mypage}">취소</a>
+                    <button id="withdraw-button" class="withdraw-button" type="submit">회원 탈퇴</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</main>
+</body>
+</html>

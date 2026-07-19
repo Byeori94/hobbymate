@@ -13,6 +13,9 @@
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
 <main class="hero">
+    <div class="home-message" th:if="${successMessage}" role="status" th:text="${successMessage}">
+        회원 탈퇴가 완료되었습니다.
+    </div>
     <h1>취미로 이어지는 우리, HobbyMate</h1>
     <p>관심사가 같은 사람들과 모임을 만들고 새로운 경험을 시작해 보세요.</p>
 </main>

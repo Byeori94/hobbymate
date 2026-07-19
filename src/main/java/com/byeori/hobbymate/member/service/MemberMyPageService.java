@@ -10,12 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.byeori.hobbymate.common.exception.MemberProfileUpdateException;
 import com.byeori.hobbymate.common.exception.MemberPasswordChangeException;
+import com.byeori.hobbymate.common.exception.MemberWithdrawalException;
 import com.byeori.hobbymate.common.validator.MemberValidationRules;
 import com.byeori.hobbymate.member.dao.MemberDao;
 import com.byeori.hobbymate.member.dto.MemberMyPageResponse;
 import com.byeori.hobbymate.member.dto.MemberPasswordChangeRequest;
 import com.byeori.hobbymate.member.dto.MemberProfileUpdateRequest;
 import com.byeori.hobbymate.member.dto.MemberProfileUpdateResult;
+import com.byeori.hobbymate.member.dto.MemberWithdrawalRequest;
 import com.byeori.hobbymate.member.vo.MemberMyPageInfo;
 import com.byeori.hobbymate.member.vo.MemberProfileUpdate;
 
@@ -120,6 +122,29 @@ public class MemberMyPageService {
         String encodedPassword = passwordEncoder.encode(request.getNewPassword());
         if (memberDao.updateActiveMemberPassword(memberId, encodedPassword) != 1) {
             throw new MemberPasswordChangeException(null, "비밀번호를 변경할 수 없습니다.");
+        }
+    }
+
+    @Transactional
+    public void withdrawMember(Long memberId, MemberWithdrawalRequest request) {
+        if (memberId == null) {
+            throw new MemberWithdrawalException(null, "회원정보를 찾을 수 없습니다.");
+        }
+        if (!request.isWithdrawAgreed()) {
+            throw new MemberWithdrawalException(
+                    "withdrawAgreed", "회원 탈퇴 안내를 확인하고 동의해 주세요.");
+        }
+
+        String storedPasswordHash = memberDao.findActivePasswordHashByMemberId(memberId);
+        if (storedPasswordHash == null || storedPasswordHash.isBlank()) {
+            throw new MemberWithdrawalException(null, "회원정보를 찾을 수 없습니다.");
+        }
+        if (!passwordEncoder.matches(request.getCurrentPassword(), storedPasswordHash)) {
+            throw new MemberWithdrawalException(
+                    "currentPassword", "현재 비밀번호가 일치하지 않습니다.");
+        }
+        if (memberDao.withdrawActiveMember(memberId) != 1) {
+            throw new MemberWithdrawalException(null, "회원 탈퇴를 처리할 수 없습니다.");
         }
     }
 

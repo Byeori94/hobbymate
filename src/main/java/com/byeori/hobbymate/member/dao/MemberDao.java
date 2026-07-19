@@ -24,4 +24,5 @@ public interface MemberDao {
     int updateActiveMemberPassword(
             @Param("memberId") Long memberId,
             @Param("encodedPassword") String encodedPassword);
+    int withdrawActiveMember(@Param("memberId") Long memberId);
 }
