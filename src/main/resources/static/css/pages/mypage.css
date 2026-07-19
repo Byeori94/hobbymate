@@ -1,0 +1,157 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    color: #33383f;
+    background: #f5f7f6;
+    font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.mypage {
+    padding: 56px 24px 80px;
+}
+
+.mypage-container {
+    width: min(100%, 840px);
+    margin: 0 auto;
+}
+
+.mypage-heading {
+    margin-bottom: 24px;
+}
+
+.mypage-heading h1 {
+    margin: 0 0 8px;
+    color: #24292f;
+    font-size: clamp(28px, 4vw, 36px);
+    line-height: 1.25;
+}
+
+.mypage-heading p {
+    margin: 0;
+    color: #68727d;
+    font-size: 16px;
+}
+
+.profile-card {
+    overflow: hidden;
+    border: 1px solid #e1e4e8;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 12px 36px rgb(51 56 63 / 8%);
+}
+
+.profile-summary {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 32px 36px;
+    background: linear-gradient(135deg, #f2fcf5 0%, #fff 72%);
+}
+
+.mypage-profile-image {
+    flex: 0 0 112px;
+    width: 112px;
+    height: 112px;
+    border: 4px solid #fff;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 5px 18px rgb(34 154 67 / 20%);
+}
+
+.profile-identity h2 {
+    margin: 0 0 7px;
+    color: #24292f;
+    font-size: 28px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.profile-identity p {
+    margin: 0;
+    color: #68727d;
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.member-info {
+    margin: 0;
+    padding: 10px 36px 22px;
+}
+
+.member-info-row {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 20px;
+    padding: 18px 4px;
+    border-bottom: 1px solid #eef0f2;
+}
+
+.member-info-row:last-child {
+    border-bottom: 0;
+}
+
+.member-info dt {
+    color: #68727d;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.member-info dd {
+    min-width: 0;
+    margin: 0;
+    color: #24292f;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.member-info .breakable {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+    .mypage {
+        padding: 36px 16px 56px;
+    }
+
+    .mypage-heading {
+        margin-bottom: 20px;
+    }
+
+    .mypage-heading p {
+        font-size: 15px;
+    }
+
+    .profile-card {
+        border-radius: 15px;
+    }
+
+    .profile-summary {
+        flex-direction: column;
+        gap: 15px;
+        padding: 28px 20px 24px;
+        text-align: center;
+    }
+
+    .mypage-profile-image {
+        flex-basis: 96px;
+        width: 96px;
+        height: 96px;
+    }
+
+    .profile-identity h2 {
+        font-size: 24px;
+    }
+
+    .member-info {
+        padding: 8px 20px 18px;
+    }
+
+    .member-info-row {
+        grid-template-columns: 1fr;
+        gap: 7px;
+        padding: 15px 0;
+    }
+}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>마이페이지 | HobbyMate</title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/mypage.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="mypage">
+    <section class="mypage-container" aria-labelledby="mypage-title">
+        <div class="mypage-heading">
+            <h1 id="mypage-title">마이페이지</h1>
+            <p>내 기본정보를 확인할 수 있습니다.</p>
+        </div>
+
+        <article class="profile-card">
+            <div class="profile-summary">
+                <img class="mypage-profile-image"
+                     th:src="${#strings.isEmpty(member.profileImageUrl)} ? @{/images/common/default-profile.png} : @{${member.profileImageUrl}}"
+                     th:alt="${member.nickname == '-'} ? '기본 프로필 이미지' : |${member.nickname}님의 프로필 이미지|"
+                     width="112"
+                     height="112">
+                <div class="profile-identity">
+                    <h2 th:text="|${member.nickname}님|">벼리님</h2>
+                    <p th:text="|@${member.loginId}|">@byeori94</p>
+                </div>
+            </div>
+
+            <dl class="member-info" aria-label="회원 기본정보">
+                <div class="member-info-row">
+                    <dt>이름</dt>
+                    <dd th:text="${member.name}">최벼리</dd>
+                </div>
+                <div class="member-info-row">
+                    <dt>이메일</dt>
+                    <dd class="breakable" th:text="${member.email}">sample@example.com</dd>
+                </div>
+                <div class="member-info-row">
+                    <dt>휴대폰 번호</dt>
+                    <dd th:text="${member.maskedPhone}">010-****-1234</dd>
+                </div>
+                <div class="member-info-row">
+                    <dt>성별</dt>
+                    <dd th:text="${member.gender}">여성</dd>
+                </div>
+                <div class="member-info-row">
+                    <dt>생년월일</dt>
+                    <dd th:text="${member.birthDate}">1994.03.10</dd>
+                </div>
+                <div class="member-info-row">
+                    <dt>가입일</dt>
+                    <dd th:text="${member.joinedDate}">2026.07.19</dd>
+                </div>
+            </dl>
+        </article>
+    </section>
+</main>
+</body>
+</html>

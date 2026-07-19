@@ -4,11 +4,13 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.byeori.hobbymate.member.vo.MemberAuthInfo;
+import com.byeori.hobbymate.member.vo.MemberMyPageInfo;
 import com.byeori.hobbymate.member.vo.MemberRegistration;
 
 @Mapper
 public interface MemberDao {
     MemberAuthInfo findAuthByLoginId(@Param("loginId") String loginId);
+    MemberMyPageInfo findActiveMemberForMyPage(@Param("memberId") Long memberId);
     boolean existsByLoginId(@Param("loginId") String loginId);
     boolean existsByNickname(@Param("nickname") String nickname);
     boolean existsByEmail(@Param("email") String email);

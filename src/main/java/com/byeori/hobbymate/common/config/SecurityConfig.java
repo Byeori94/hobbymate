@@ -31,6 +31,8 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/error")
                         .permitAll()
+                        .requestMatchers("/member/mypage")
+                        .hasRole("USER")
                         .anyRequest()
                         .authenticated())
                 .formLogin(form -> form

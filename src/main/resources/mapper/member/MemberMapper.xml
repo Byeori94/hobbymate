@@ -17,6 +17,22 @@
         WHERE LOGIN_ID = #{loginId}
     </select>
 
+    <select id="findActiveMemberForMyPage"
+            resultType="com.byeori.hobbymate.member.vo.MemberMyPageInfo">
+        SELECT LOGIN_ID AS loginId,
+               NICKNAME AS nickname,
+               NAME AS name,
+               EMAIL AS email,
+               PHONE AS phone,
+               GENDER AS gender,
+               BIRTH_DATE AS birthDate,
+               CREATED_AT AS createdAt,
+               PROFILE_IMAGE_URL AS profileImageUrl
+        FROM HM_MEMBER
+        WHERE MEMBER_ID = #{memberId}
+          AND MEMBER_STATUS = 'ACTIVE'
+    </select>
+
     <select id="existsByLoginId" resultType="boolean">
         SELECT EXISTS (
             SELECT 1
