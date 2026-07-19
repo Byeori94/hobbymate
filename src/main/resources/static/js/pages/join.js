@@ -8,7 +8,7 @@
 
     const checkConfig = {
         loginId: {
-            endpoint: "/auth/check-id",
+            endpoint: form.dataset.checkIdUrl,
             validate(value) {
                 if (!value) return "아이디를 입력해 주세요.";
                 if (/[A-Z]/.test(value)) return "아이디에는 영문 대문자를 사용할 수 없습니다.";
@@ -17,14 +17,14 @@
             }
         },
         nickname: {
-            endpoint: "/auth/check-nickname",
+            endpoint: form.dataset.checkNicknameUrl,
             validate(value) {
                 if (!value || value.length > 50) return "닉네임 형식을 확인해 주세요.";
                 return "";
             }
         },
         email: {
-            endpoint: "/auth/check-email",
+            endpoint: form.dataset.checkEmailUrl,
             validate(value) {
                 const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!value || value.length > 255 || !email.test(value)) return "이메일 형식을 확인해 주세요.";
