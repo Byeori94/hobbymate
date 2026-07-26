@@ -5,25 +5,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>HobbyMate</title>
+    <meta name="description"
+          content="관심사가 같은 사람들과 모임을 만들고 함께 취미를 즐기는 HobbyMate">
+    <title>HobbyMate | 취미로 이어지는 우리</title>
     <link rel="stylesheet" th:href="@{/css/common/header.css}">
-    <link rel="stylesheet" th:href="@{/css/pages/home.css}">
+    <link rel="stylesheet" th:href="@{/css/common/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/home.css(v='20260726-1')}">
     <script defer th:src="@{/js/common/header.js}"></script>
 </head>
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
-<main class="hero">
-    <div class="home-message" th:if="${successMessage}" role="status" th:text="${successMessage}">
-        회원 탈퇴가 완료되었습니다.
+
+<main>
+    <div class="home-alert-wrap">
+        <div class="home-message"
+             th:if="${successMessage}"
+             role="status"
+             th:text="${successMessage}">
+            요청이 완료되었습니다.
+        </div>
+        <div class="home-message home-message-error"
+             th:if="${errorMessage}"
+             role="alert"
+             th:text="${errorMessage}">
+            요청을 처리할 수 없습니다.
+        </div>
     </div>
-    <div class="home-message home-message-error"
-         th:if="${errorMessage}"
-         role="alert"
-         th:text="${errorMessage}">
-        요청을 처리할 수 없습니다.
-    </div>
-    <h1>취미로 이어지는 우리, HobbyMate</h1>
-    <p>관심사가 같은 사람들과 모임을 만들고 새로운 경험을 시작해 보세요.</p>
+
+    <section class="home-hero" aria-labelledby="home-hero-title">
+        <div class="home-container hero-layout">
+            <div class="hero-copy">
+                <p class="section-kicker">함께할수록 더 즐거운 취미 생활</p>
+                <h1 id="home-hero-title">취미로 이어지는 우리,<br><span>HobbyMate</span></h1>
+                <p class="hero-description">
+                    관심사가 같은 사람들과 모임을 만들고,<br>
+                    함께 배우고 즐기며 새로운 일상을 시작해 보세요.
+                </p>
+
+                <p class="hero-welcome" sec:authorize="isAuthenticated()">
+                    <strong sec:authentication="principal.nickname">회원</strong>님,
+                    오늘은 어떤 취미를 함께해 볼까요?
+                </p>
+
+                <div class="hero-actions" sec:authorize="isAnonymous()">
+                    <a class="home-button home-button-primary" th:href="@{/auth/join}">
+                        HobbyMate 시작하기
+                    </a>
+                    <a class="home-button home-button-secondary" th:href="@{/auth/login}">
+                        로그인
+                    </a>
+                </div>
+                <div class="hero-actions" sec:authorize="isAuthenticated()">
+                    <a class="home-button home-button-primary" th:href="@{/clubs/new}">
+                        모임 개설하기
+                    </a>
+                    <a class="home-button home-button-secondary" th:href="@{/member/mypage}">
+                        마이페이지
+                    </a>
+                </div>
+                <p class="feature-notice">모임 둘러보기 기능은 현재 준비 중입니다.</p>
+            </div>
+
+            <div class="hero-visual" aria-hidden="true">
+                <div class="hero-orbit hero-orbit-large"></div>
+                <div class="hero-orbit hero-orbit-small"></div>
+                <div class="hero-center">
+                    <span class="hero-center-mark">HM</span>
+                    <strong>취미로 연결</strong>
+                </div>
+                <span class="hobby-chip hobby-chip-fitness">운동</span>
+                <span class="hobby-chip hobby-chip-reading">독서</span>
+                <span class="hobby-chip hobby-chip-craft">공예</span>
+                <span class="hobby-chip hobby-chip-cooking">요리</span>
+                <span class="hobby-chip hobby-chip-music">음악</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-section home-intro" aria-labelledby="intro-title">
+        <div class="home-container">
+            <div class="section-heading">
+                <p class="section-kicker">WHY HOBBYMATE</p>
+                <h2 id="intro-title">혼자 하던 취미를 함께하는 즐거움으로</h2>
+                <p>취향이 비슷한 사람을 만나고, 각자의 경험을 나누며 취미의 폭을 넓혀 보세요.</p>
+            </div>
+
+            <div class="intro-grid">
+                <article class="intro-item">
+                    <span class="intro-number" aria-hidden="true">01</span>
+                    <h3>취미로 만나는 사람들</h3>
+                    <p>나이나 직업보다 좋아하는 것을 중심으로 자연스럽게 연결됩니다.</p>
+                </article>
+                <article class="intro-item">
+                    <span class="intro-number" aria-hidden="true">02</span>
+                    <h3>직접 만들고 참여하는 모임</h3>
+                    <p>원하는 주제로 모임을 만들고, 관심 있는 모임에 참여할 수 있습니다.</p>
+                </article>
+                <article class="intro-item">
+                    <span class="intro-number" aria-hidden="true">03</span>
+                    <h3>신뢰를 생각한 커뮤니티</h3>
+                    <p>본인인증과 신고·관리 정책을 바탕으로 편안한 활동 환경을 지향합니다.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-section home-features" aria-labelledby="features-title">
+        <div class="home-container">
+            <div class="section-heading">
+                <p class="section-kicker">WHAT YOU CAN DO</p>
+                <h2 id="features-title">HobbyMate에서 할 수 있는 것</h2>
+                <p>모임을 찾는 순간부터 함께한 경험을 나누는 순간까지 이어집니다.</p>
+            </div>
+
+            <div class="feature-grid">
+                <article class="feature-card">
+                    <span class="feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="10.5" cy="10.5" r="5.5"></circle>
+                            <path d="m15 15 4 4"></path>
+                        </svg>
+                    </span>
+                    <p class="feature-status">준비 중</p>
+                    <h3>취향에 맞는 모임 찾기</h3>
+                    <p>관심 취미와 지역, 활동 조건을 살펴보고 나에게 맞는 모임을 찾습니다.</p>
+                </article>
+                <article class="feature-card">
+                    <span class="feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 5v14M5 12h14"></path>
+                            <circle cx="12" cy="12" r="9"></circle>
+                        </svg>
+                    </span>
+                    <p class="feature-status feature-status-live">이용 가능</p>
+                    <h3>나만의 모임 만들기</h3>
+                    <p>원하는 주제와 가입 조건, 운영 방식을 정해 새로운 모임을 시작합니다.</p>
+                </article>
+                <article class="feature-card">
+                    <span class="feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <rect x="4" y="5" width="16" height="15" rx="3"></rect>
+                            <path d="M8 3v4M16 3v4M4 10h16"></path>
+                        </svg>
+                    </span>
+                    <p class="feature-status">준비 중</p>
+                    <h3>함께하는 만남</h3>
+                    <p>온라인과 오프라인 만남을 통해 계획을 세우고 취미 활동을 함께합니다.</p>
+                </article>
+                <article class="feature-card">
+                    <span class="feature-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M5 5h14v11H9l-4 3V5Z"></path>
+                            <path d="M8 9h8M8 12h5"></path>
+                        </svg>
+                    </span>
+                    <p class="feature-status">준비 중</p>
+                    <h3>모임 안에서 소통하기</h3>
+                    <p>공지와 자유글, 만남 모집과 후기로 서로의 이야기와 경험을 나눕니다.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-section home-steps" aria-labelledby="steps-title">
+        <div class="home-container">
+            <div class="section-heading">
+                <p class="section-kicker">HOW IT WORKS</p>
+                <h2 id="steps-title">HobbyMate 이용 방법</h2>
+                <p>회원가입부터 함께하는 활동까지 네 단계로 시작할 수 있습니다.</p>
+            </div>
+
+            <ol class="step-list">
+                <li class="step-item">
+                    <span class="step-number">1</span>
+                    <h3>회원가입과 본인인증</h3>
+                    <p>기본정보를 등록하고 신뢰할 수 있는 활동을 준비합니다.</p>
+                </li>
+                <li class="step-item">
+                    <span class="step-number">2</span>
+                    <h3>관심 있는 모임 찾기</h3>
+                    <p>취미와 지역, 활동 조건에 맞는 모임을 살펴봅니다.</p>
+                </li>
+                <li class="step-item">
+                    <span class="step-number">3</span>
+                    <h3>가입하거나 직접 개설</h3>
+                    <p>마음에 드는 모임에 참여하거나 새로운 모임을 만듭니다.</p>
+                </li>
+                <li class="step-item">
+                    <span class="step-number">4</span>
+                    <h3>함께 활동하기</h3>
+                    <p>만남과 게시판을 통해 취미 경험을 차곡차곡 쌓습니다.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="home-section home-values" aria-labelledby="values-title">
+        <div class="home-container values-layout">
+            <div class="section-heading values-heading">
+                <p class="section-kicker">OUR VALUES</p>
+                <h2 id="values-title">가볍게 시작하고,<br>오래 이어지는 취미 생활</h2>
+                <p>좋아하는 마음이 편안한 관계와 꾸준한 활동으로 이어지도록 설계합니다.</p>
+            </div>
+
+            <ul class="value-list">
+                <li>
+                    <span class="value-mark" aria-hidden="true"></span>
+                    <div>
+                        <h3>관심사 중심</h3>
+                        <p>나이와 직업보다 취미를 중심으로 연결합니다.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="value-mark" aria-hidden="true"></span>
+                    <div>
+                        <h3>지역과 방식 선택</h3>
+                        <p>가까운 지역의 활동부터 온라인 만남까지 선택합니다.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="value-mark" aria-hidden="true"></span>
+                    <div>
+                        <h3>신뢰할 수 있는 활동</h3>
+                        <p>본인인증과 운영 정책으로 안전한 커뮤니티를 지향합니다.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="value-mark" aria-hidden="true"></span>
+                    <div>
+                        <h3>기록으로 남는 경험</h3>
+                        <p>게시판과 후기로 함께한 추억과 정보를 공유합니다.</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="home-cta" aria-labelledby="cta-title">
+        <div class="home-container cta-inner">
+            <p class="section-kicker">READY TOGETHER</p>
+            <h2 id="cta-title">이번 주말, 좋아하는 취미로<br>새로운 사람을 만나보세요.</h2>
+            <p class="cta-description">
+                HobbyMate에서 함께하고 싶은 활동을 발견하거나 직접 시작해 보세요.
+            </p>
+
+            <div class="hero-actions cta-actions" sec:authorize="isAnonymous()">
+                <a class="home-button home-button-light" th:href="@{/auth/join}">회원가입</a>
+                <a class="home-button home-button-outline-light" th:href="@{/auth/login}">로그인</a>
+            </div>
+            <div class="hero-actions cta-actions" sec:authorize="isAuthenticated()">
+                <a class="home-button home-button-light" th:href="@{/clubs/new}">모임 개설하기</a>
+                <a class="home-button home-button-outline-light" th:href="@{/member/mypage}">마이페이지</a>
+            </div>
+        </div>
+    </section>
 </main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
 </body>
 </html>
