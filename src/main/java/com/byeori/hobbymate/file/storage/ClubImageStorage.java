@@ -9,6 +9,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -90,6 +91,20 @@ public class ClubImageStorage {
         }
     }
 
+    public Optional<Path> find(String storedFileName) {
+        if (!isSafeStoredFileName(storedFileName)) {
+            return Optional.empty();
+        }
+        Path candidate = safePath(storedFileName);
+        return Files.isRegularFile(candidate) ? Optional.of(candidate) : Optional.empty();
+    }
+
+    public MediaType mediaType(String storedFileName) {
+        String extension = storedFileName.substring(storedFileName.lastIndexOf('.') + 1)
+                .toLowerCase(Locale.ROOT);
+        return MediaType.parseMediaType(CONTENT_TYPES.get(extension));
+    }
+
     private String extension(String originalFileName) {
         if (originalFileName == null) {
             throw invalidType();
@@ -143,8 +158,7 @@ public class ClubImageStorage {
     }
 
     private Path safePath(String storedFileName) {
-        if (!storedFileName.matches(
-                "[0-9a-fA-F-]{36}\\.(jpg|jpeg|png|webp)")) {
+        if (!isSafeStoredFileName(storedFileName)) {
             throw new IllegalArgumentException("Unsafe club image file name");
         }
         Path target = clubDirectory.resolve(storedFileName).normalize();
@@ -152,6 +166,11 @@ public class ClubImageStorage {
             throw new IllegalArgumentException("Unsafe club image path");
         }
         return target;
+    }
+
+    private boolean isSafeStoredFileName(String storedFileName) {
+        return storedFileName != null
+                && storedFileName.matches("[0-9a-fA-F-]{36}\\.(jpg|jpeg|png|webp)");
     }
 
     private ClubImageException invalidType() {

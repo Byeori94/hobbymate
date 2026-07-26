@@ -5,10 +5,12 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.byeori.hobbymate.club.dto.ClubSearchCondition;
 import com.byeori.hobbymate.club.vo.ClubCategory;
 import com.byeori.hobbymate.club.vo.ClubCreation;
 import com.byeori.hobbymate.club.vo.ClubCreationMember;
 import com.byeori.hobbymate.club.vo.ClubLeaderRegistration;
+import com.byeori.hobbymate.club.vo.ClubListItem;
 
 @Mapper
 public interface ClubDao {
@@ -22,6 +24,10 @@ public interface ClubDao {
     List<ClubCategory> findActiveCategories();
 
     boolean existsActiveCategory(@Param("categoryId") Long categoryId);
+
+    long countPublicClubs(ClubSearchCondition search);
+
+    List<ClubListItem> findPublicClubs(ClubSearchCondition search);
 
     int insertClub(ClubCreation club);
 

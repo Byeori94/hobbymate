@@ -52,6 +52,119 @@
         )
     </select>
 
+    <sql id="publicClubJoins">
+        INNER JOIN HM_CATEGORY CAT
+                ON CAT.CATEGORY_ID = C.CATEGORY_ID
+        LEFT JOIN HM_MEMBER LEADER
+               ON LEADER.MEMBER_ID = C.OWNER_MEMBER_ID
+        LEFT JOIN (
+            SELECT CLUB_ID,
+                   COUNT(*) AS MEMBER_COUNT
+            FROM HM_CLUB_MEMBER
+            WHERE MEMBER_STATUS = 'ACTIVE'
+            GROUP BY CLUB_ID
+        ) ACTIVE_MEMBERS
+               ON ACTIVE_MEMBERS.CLUB_ID = C.CLUB_ID
+    </sql>
+
+    <sql id="publicClubConditions">
+        <where>
+            C.CLUB_STATUS = 'ACTIVE'
+            <if test="keyword != null and keyword != ''">
+                <choose>
+                    <when test="searchType == 'NAME'">
+                        AND C.CLUB_NAME LIKE #{keywordPattern} ESCAPE '!'
+                    </when>
+                    <when test="searchType == 'DESCRIPTION'">
+                        AND (
+                            C.CLUB_SUMMARY LIKE #{keywordPattern} ESCAPE '!'
+                            OR C.CLUB_DESCRIPTION LIKE #{keywordPattern} ESCAPE '!'
+                        )
+                    </when>
+                    <when test="searchType == 'LEADER'">
+                        AND LEADER.NICKNAME LIKE #{keywordPattern} ESCAPE '!'
+                    </when>
+                    <otherwise>
+                        AND (
+                            C.CLUB_NAME LIKE #{keywordPattern} ESCAPE '!'
+                            OR C.CLUB_SUMMARY LIKE #{keywordPattern} ESCAPE '!'
+                            OR C.CLUB_DESCRIPTION LIKE #{keywordPattern} ESCAPE '!'
+                            OR LEADER.NICKNAME LIKE #{keywordPattern} ESCAPE '!'
+                        )
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="categoryId != null">
+                AND C.CATEGORY_ID = #{categoryId}
+            </if>
+            <if test="region != null and region != ''">
+                AND C.ACTIVITY_REGION LIKE #{regionPattern} ESCAPE '!'
+            </if>
+            <if test="genderPolicy != 'ALL'">
+                AND C.GENDER_POLICY = #{genderPolicy}
+            </if>
+            <if test="age != null">
+                AND (C.MIN_AGE IS NULL OR C.MIN_AGE &lt;= #{age})
+                AND (C.MAX_AGE IS NULL OR C.MAX_AGE &gt;= #{age})
+            </if>
+            <if test="recruitStatus != 'ALL'">
+                AND C.RECRUIT_STATUS = #{recruitStatus}
+            </if>
+        </where>
+    </sql>
+
+    <select id="countPublicClubs" resultType="long">
+        SELECT COUNT(*)
+        FROM HM_CLUB C
+        <include refid="publicClubJoins"/>
+        <include refid="publicClubConditions"/>
+    </select>
+
+    <select id="findPublicClubs"
+            resultType="com.byeori.hobbymate.club.vo.ClubListItem">
+        SELECT C.CLUB_ID AS clubId,
+               C.REPRESENTATIVE_IMAGE_URL AS representativeImageUrl,
+               C.CLUB_NAME AS clubName,
+               CAT.CATEGORY_NAME AS categoryName,
+               C.ACTIVITY_REGION AS activityRegion,
+               C.CLUB_SUMMARY AS clubSummary,
+               C.GENDER_POLICY AS genderPolicy,
+               C.MIN_AGE AS minAge,
+               C.MAX_AGE AS maxAge,
+               COALESCE(ACTIVE_MEMBERS.MEMBER_COUNT, 0) AS memberCount,
+               C.MAX_MEMBER_COUNT AS maxMemberCount,
+               C.RECRUIT_STATUS AS recruitStatus,
+               C.JOIN_TYPE AS joinType,
+               LEADER.NICKNAME AS leaderNickname,
+               C.LAST_ACTIVITY_AT AS lastActivityAt,
+               C.CREATED_AT AS createdAt
+        FROM HM_CLUB C
+        <include refid="publicClubJoins"/>
+        <include refid="publicClubConditions"/>
+        <choose>
+            <when test="sortType == 'NEWEST'">
+                ORDER BY C.CREATED_AT DESC, C.CLUB_ID DESC
+            </when>
+            <when test="sortType == 'MEMBER_COUNT'">
+                ORDER BY COALESCE(ACTIVE_MEMBERS.MEMBER_COUNT, 0) DESC,
+                         C.LAST_ACTIVITY_AT DESC,
+                         C.CLUB_ID DESC
+            </when>
+            <when test="sortType == 'AVAILABLE_CAPACITY'">
+                ORDER BY (C.MAX_MEMBER_COUNT - COALESCE(ACTIVE_MEMBERS.MEMBER_COUNT, 0)) DESC,
+                         C.LAST_ACTIVITY_AT DESC,
+                         C.CLUB_ID DESC
+            </when>
+            <when test="sortType == 'NAME'">
+                ORDER BY C.CLUB_NAME ASC, C.CLUB_ID DESC
+            </when>
+            <otherwise>
+                ORDER BY C.LAST_ACTIVITY_AT DESC, C.CLUB_ID DESC
+            </otherwise>
+        </choose>
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
     <insert id="insertClub"
             parameterType="com.byeori.hobbymate.club.vo.ClubCreation"
             useGeneratedKeys="true"

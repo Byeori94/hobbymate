@@ -48,22 +48,21 @@
                 </p>
 
                 <div class="hero-actions" sec:authorize="isAnonymous()">
-                    <a class="home-button home-button-primary" th:href="@{/auth/join}">
-                        HobbyMate 시작하기
+                    <a class="home-button home-button-primary" th:href="@{/clubs}">
+                        모임 둘러보기
                     </a>
-                    <a class="home-button home-button-secondary" th:href="@{/auth/login}">
-                        로그인
+                    <a class="home-button home-button-secondary" th:href="@{/auth/join}">
+                        HobbyMate 시작하기
                     </a>
                 </div>
                 <div class="hero-actions" sec:authorize="isAuthenticated()">
-                    <a class="home-button home-button-primary" th:href="@{/clubs/new}">
+                    <a class="home-button home-button-primary" th:href="@{/clubs}">
+                        모임 둘러보기
+                    </a>
+                    <a class="home-button home-button-secondary" th:href="@{/clubs/new}">
                         모임 개설하기
                     </a>
-                    <a class="home-button home-button-secondary" th:href="@{/member/mypage}">
-                        마이페이지
-                    </a>
                 </div>
-                <p class="feature-notice">모임 둘러보기 기능은 현재 준비 중입니다.</p>
             </div>
 
             <div class="hero-visual" aria-hidden="true">
@@ -126,7 +125,7 @@
                             <path d="m15 15 4 4"></path>
                         </svg>
                     </span>
-                    <p class="feature-status">준비 중</p>
+                    <p class="feature-status feature-status-live">이용 가능</p>
                     <h3>취향에 맞는 모임 찾기</h3>
                     <p>관심 취미와 지역, 활동 조건을 살펴보고 나에게 맞는 모임을 찾습니다.</p>
                 </article>
@@ -254,8 +253,8 @@
                 <a class="home-button home-button-outline-light" th:href="@{/auth/login}">로그인</a>
             </div>
             <div class="hero-actions cta-actions" sec:authorize="isAuthenticated()">
-                <a class="home-button home-button-light" th:href="@{/clubs/new}">모임 개설하기</a>
-                <a class="home-button home-button-outline-light" th:href="@{/member/mypage}">마이페이지</a>
+                <a class="home-button home-button-light" th:href="@{/clubs}">모임 둘러보기</a>
+                <a class="home-button home-button-outline-light" th:href="@{/clubs/new}">모임 개설하기</a>
             </div>
         </div>
     </section>

@@ -12,7 +12,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.byeori.hobbymate.auth.security.HobbyMateUserDetails;
 import com.byeori.hobbymate.club.dto.ClubCreateRequest;
 import com.byeori.hobbymate.club.dto.ClubCreationPage;
+import com.byeori.hobbymate.club.dto.ClubListRequest;
+import com.byeori.hobbymate.club.dto.ClubListView;
 import com.byeori.hobbymate.club.service.ClubCreationService;
+import com.byeori.hobbymate.club.service.ClubListService;
 import com.byeori.hobbymate.common.exception.ClubCreationException;
 import com.byeori.hobbymate.common.exception.ClubImageException;
 
@@ -22,11 +25,28 @@ import jakarta.validation.Valid;
 public class ClubController {
 
     private static final String CREATE_VIEW = "club/create";
+    private static final String LIST_VIEW = "club/list";
 
     private final ClubCreationService clubCreationService;
+    private final ClubListService clubListService;
 
-    public ClubController(ClubCreationService clubCreationService) {
+    public ClubController(
+            ClubCreationService clubCreationService,
+            ClubListService clubListService) {
         this.clubCreationService = clubCreationService;
+        this.clubListService = clubListService;
+    }
+
+    @GetMapping("/clubs")
+    public String list(
+            @ModelAttribute ClubListRequest request,
+            Model model) {
+        ClubListView view = clubListService.getList(request);
+        model.addAttribute("clubs", view.clubs());
+        model.addAttribute("search", view.search());
+        model.addAttribute("categories", view.categories());
+        model.addAttribute("validationMessages", view.validationMessages());
+        return LIST_VIEW;
     }
 
     @GetMapping("/clubs/new")

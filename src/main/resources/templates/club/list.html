@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="관심사와 활동 조건에 맞는 HobbyMate 모임을 검색해 보세요.">
+    <title>모임 둘러보기 | HobbyMate</title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/common/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/club-list.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/pages/club-list.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="club-list-page">
+    <section class="club-list-heading" aria-labelledby="club-list-title">
+        <p class="page-kicker">FIND YOUR HOBBY</p>
+        <h1 id="club-list-title">모임 둘러보기</h1>
+        <p>관심사와 활동 조건에 맞는 모임을 찾아보세요.</p>
+    </section>
+
+    <section class="club-search-card" aria-labelledby="club-search-title">
+        <h2 id="club-search-title" class="visually-hidden">모임 검색 및 필터</h2>
+
+        <div class="search-message"
+             th:if="${!#lists.isEmpty(validationMessages)}"
+             role="alert">
+            <p th:each="message : ${validationMessages}" th:text="${message}">
+                일부 검색 조건을 적용하지 않았습니다.
+            </p>
+        </div>
+
+        <form class="club-search-form" th:action="@{/clubs}" method="get">
+            <div class="keyword-search">
+                <label for="searchType">검색 대상</label>
+                <select id="searchType" name="searchType">
+                    <option value="ALL" th:selected="${search.searchType == 'ALL'}">전체</option>
+                    <option value="NAME" th:selected="${search.searchType == 'NAME'}">모임명</option>
+                    <option value="DESCRIPTION"
+                            th:selected="${search.searchType == 'DESCRIPTION'}">소개</option>
+                    <option value="LEADER"
+                            th:selected="${search.searchType == 'LEADER'}">모임장</option>
+                </select>
+
+                <label class="visually-hidden" for="keyword">검색어</label>
+                <input id="keyword"
+                       name="keyword"
+                       type="search"
+                       maxlength="100"
+                       th:value="${search.keyword}"
+                       placeholder="모임명, 소개 또는 모임장 닉네임을 검색하세요">
+
+                <button class="club-button club-button-primary" type="submit">검색</button>
+            </div>
+
+            <div class="filter-heading">
+                <div>
+                    <h3>조건 필터</h3>
+                    <p>원하는 활동 조건을 선택해 결과를 좁혀보세요.</p>
+                </div>
+                <a class="reset-link" th:href="@{/clubs}">조건 초기화</a>
+            </div>
+
+            <div class="filter-grid">
+                <label>
+                    <span>카테고리</span>
+                    <select name="categoryId">
+                        <option value="">전체 카테고리</option>
+                        <option th:each="category : ${categories}"
+                                th:value="${category.categoryId}"
+                                th:text="${category.categoryName}"
+                                th:selected="${search.categoryId != null
+                                    and search.categoryId == category.categoryId}">
+                            독서
+                        </option>
+                    </select>
+                </label>
+
+                <label>
+                    <span>활동 지역</span>
+                    <input name="region"
+                           type="search"
+                           maxlength="100"
+                           th:value="${search.region}"
+                           placeholder="예: 서울, 마포구">
+                </label>
+
+                <label>
+                    <span>성별 유형</span>
+                    <select name="genderPolicy">
+                        <option value="ALL" th:selected="${search.genderPolicy == 'ALL'}">전체</option>
+                        <option value="MIXED" th:selected="${search.genderPolicy == 'MIXED'}">혼성</option>
+                        <option value="FEMALE" th:selected="${search.genderPolicy == 'FEMALE'}">여성</option>
+                        <option value="MALE" th:selected="${search.genderPolicy == 'MALE'}">남성</option>
+                    </select>
+                </label>
+
+                <label>
+                    <span>가입 가능 연령</span>
+                    <input name="age"
+                           type="number"
+                           min="18"
+                           max="100"
+                           inputmode="numeric"
+                           th:value="${search.age}"
+                           placeholder="만 나이">
+                </label>
+
+                <label>
+                    <span>모집 상태</span>
+                    <select name="recruitStatus">
+                        <option value="ALL" th:selected="${search.recruitStatus == 'ALL'}">전체</option>
+                        <option value="OPEN" th:selected="${search.recruitStatus == 'OPEN'}">모집 중</option>
+                        <option value="FULL" th:selected="${search.recruitStatus == 'FULL'}">정원 마감</option>
+                        <option value="CLOSED" th:selected="${search.recruitStatus == 'CLOSED'}">모집 종료</option>
+                    </select>
+                </label>
+
+                <label>
+                    <span>정렬</span>
+                    <select name="sortType">
+                        <option value="RECENT_ACTIVITY"
+                                th:selected="${search.sortType == 'RECENT_ACTIVITY'}">최근 활동순</option>
+                        <option value="NEWEST"
+                                th:selected="${search.sortType == 'NEWEST'}">최신 생성순</option>
+                        <option value="MEMBER_COUNT"
+                                th:selected="${search.sortType == 'MEMBER_COUNT'}">회원 많은 순</option>
+                        <option value="AVAILABLE_CAPACITY"
+                                th:selected="${search.sortType == 'AVAILABLE_CAPACITY'}">정원 여유 많은 순</option>
+                        <option value="NAME"
+                                th:selected="${search.sortType == 'NAME'}">모임명순</option>
+                    </select>
+                </label>
+
+                <label>
+                    <span>페이지당 표시</span>
+                    <select name="pageSize">
+                        <option value="20" th:selected="${search.pageSize == 20}">20개</option>
+                        <option value="50" th:selected="${search.pageSize == 50}">50개</option>
+                        <option value="100" th:selected="${search.pageSize == 100}">100개</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="filter-actions">
+                <button class="club-button club-button-primary" type="submit">검색·필터 적용</button>
+                <a class="club-button club-button-secondary" th:href="@{/clubs}">전체 조건 초기화</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="club-results" aria-labelledby="club-result-title">
+        <div class="result-heading">
+            <div>
+                <p class="result-count">
+                    총 <strong th:text="${clubs.totalCount}">0</strong>개의 모임
+                </p>
+                <h2 id="club-result-title">공개 모임</h2>
+            </div>
+            <p th:if="${clubs.totalCount > 0}">
+                <strong th:text="${clubs.page}">1</strong>
+                /
+                <span th:text="${clubs.totalPages}">1</span> 페이지
+            </p>
+        </div>
+
+        <div class="club-card-grid" th:unless="${#lists.isEmpty(clubs.content)}">
+            <article class="club-card" th:each="club : ${clubs.content}">
+                <div class="club-card-image">
+                    <img th:if="${club.hasRepresentativeImage()}"
+                         data-club-image-fallback
+                         th:src="@{/club-images/{fileName}(fileName=${club.representativeImageUrl})}"
+                         th:attr="data-default-src=@{/images/logo/hobbymate_logo_transparent.png}"
+                         th:alt="${club.clubName + ' 대표 이미지'}">
+                    <img class="club-default-image"
+                         th:unless="${club.hasRepresentativeImage()}"
+                         th:src="@{/images/logo/hobbymate_logo_transparent.png}"
+                         th:alt="${club.clubName + ' 기본 대표 이미지'}">
+                    <span class="recruit-badge"
+                          th:classappend="${' status-' + #strings.toLowerCase(club.recruitStatus)}"
+                          th:text="${club.recruitStatusLabel()}">모집 중</span>
+                </div>
+
+                <div class="club-card-body">
+                    <p class="club-category" th:text="${club.categoryName}">독서</p>
+                    <h3 th:text="${club.clubName}">주말 독서 모임</h3>
+                    <p class="club-summary"
+                       th:text="${#strings.isEmpty(club.clubSummary) ? '소개가 등록되지 않았습니다.' : club.clubSummary}">
+                        함께 책을 읽고 이야기를 나눠요.
+                    </p>
+
+                    <dl class="club-meta">
+                        <div>
+                            <dt>지역</dt>
+                            <dd th:text="${#strings.isEmpty(club.activityRegion) ? '지역 미정' : club.activityRegion}">
+                                서울 마포구
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>가입 조건</dt>
+                            <dd th:text="${club.genderLabel() + ' · ' + club.ageLabel()}">
+                                혼성 · 만 20–50세
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>인원</dt>
+                            <dd>
+                                <strong th:text="${club.memberCount}">1</strong>
+                                /
+                                <span th:text="${club.maxMemberCount}">20</span>명
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>가입 방식</dt>
+                            <dd th:text="${club.joinTypeLabel()}">승인 후 가입</dd>
+                        </div>
+                    </dl>
+
+                    <div class="club-card-footer">
+                        <p>
+                            모임장
+                            <strong th:text="${club.leaderDisplayName()}">벼리</strong>
+                        </p>
+                        <p>
+                            최근 활동
+                            <time th:if="${club.lastActivityAt != null}"
+                                  th:datetime="${club.lastActivityAt}"
+                                  th:text="${#temporals.format(club.lastActivityAt, 'yyyy.MM.dd')}">
+                                2026.07.26
+                            </time>
+                            <span th:unless="${club.lastActivityAt != null}">-</span>
+                        </p>
+                    </div>
+                    <p class="detail-notice">상세 보기 준비 중</p>
+                </div>
+            </article>
+        </div>
+
+        <div class="empty-result" th:if="${#lists.isEmpty(clubs.content)}">
+            <span class="empty-mark" aria-hidden="true">HM</span>
+            <h2>조건에 맞는 모임을 찾지 못했어요.</h2>
+            <p>검색어나 필터 조건을 변경해 다시 찾아보세요.</p>
+            <a class="club-button club-button-primary" th:href="@{/clubs}">조건 초기화</a>
+        </div>
+
+        <nav class="club-pagination"
+             th:if="${clubs.totalCount > 0}"
+             aria-label="모임 목록 페이지">
+            <span class="page-disabled" th:unless="${clubs.hasPreviousBlock}">이전</span>
+            <a th:if="${clubs.hasPreviousBlock}"
+               th:href="@{/clubs(page=${clubs.previousBlockPage()},pageSize=${search.pageSize},
+                    searchType=${search.searchType},keyword=${search.keyword},
+                    categoryId=${search.categoryId},region=${search.region},
+                    genderPolicy=${search.genderPolicy},age=${search.age},
+                    recruitStatus=${search.recruitStatus},sortType=${search.sortType})}">
+                이전
+            </a>
+
+            <th:block th:each="pageNo : ${#numbers.sequence(clubs.startPage, clubs.endPage)}">
+                <span class="page-current"
+                      th:if="${pageNo == clubs.page}"
+                      th:text="${pageNo}"
+                      aria-current="page">1</span>
+                <a th:unless="${pageNo == clubs.page}"
+                   th:text="${pageNo}"
+                   th:href="@{/clubs(page=${pageNo},pageSize=${search.pageSize},
+                        searchType=${search.searchType},keyword=${search.keyword},
+                        categoryId=${search.categoryId},region=${search.region},
+                        genderPolicy=${search.genderPolicy},age=${search.age},
+                        recruitStatus=${search.recruitStatus},sortType=${search.sortType})}">
+                    2
+                </a>
+            </th:block>
+
+            <a th:if="${clubs.hasNextBlock}"
+               th:href="@{/clubs(page=${clubs.nextBlockPage()},pageSize=${search.pageSize},
+                    searchType=${search.searchType},keyword=${search.keyword},
+                    categoryId=${search.categoryId},region=${search.region},
+                    genderPolicy=${search.genderPolicy},age=${search.age},
+                    recruitStatus=${search.recruitStatus},sortType=${search.sortType})}">
+                다음
+            </a>
+            <span class="page-disabled" th:unless="${clubs.hasNextBlock}">다음</span>
+        </nav>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>
