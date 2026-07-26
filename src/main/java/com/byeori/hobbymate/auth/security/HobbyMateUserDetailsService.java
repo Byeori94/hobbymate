@@ -39,8 +39,11 @@ public class HobbyMateUserDetailsService implements UserDetailsService {
 
         List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-        if ("ADMIN".equals(member.memberRole())) {
+        if ("ADMIN".equals(member.memberRole()) || "SUPER_ADMIN".equals(member.memberRole())) {
             authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        }
+        if ("SUPER_ADMIN".equals(member.memberRole())) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"));
         }
 
         return new HobbyMateUserDetails(

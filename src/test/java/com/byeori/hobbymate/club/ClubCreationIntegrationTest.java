@@ -67,6 +67,20 @@ class ClubCreationIntegrationTest {
     }
 
     @Test
+    void emptyCategoryListDisablesCategorySelectionAndSubmission() throws Exception {
+        when(clubCreationService.prepareCreation(1L))
+                .thenReturn(new ClubCreationPage(List.of()));
+
+        mockMvc.perform(get("/clubs/new").with(user(userDetails())))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString(
+                        "현재 선택할 수 있는 카테고리가 없습니다.")))
+                .andExpect(content().string(Matchers.containsString(
+                        "id=\"categoryId\"")))
+                .andExpect(content().string(Matchers.containsString("disabled")));
+    }
+
+    @Test
     void postRequiresCsrfToken() throws Exception {
         mockMvc.perform(validRequest().with(user(userDetails())))
                 .andExpect(status().isForbidden());

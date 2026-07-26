@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${editMode ? '카테고리 수정 | HobbyMate' : '카테고리 등록 | HobbyMate'}">
+        카테고리 등록 | HobbyMate
+    </title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/admin-member-verifications.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/admin-categories.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="admin-category-page admin-category-form-page">
+    <a class="admin-category-back-link" th:href="@{/admin/categories}">← 목록으로</a>
+
+    <section class="verification-form-card admin-category-form-card">
+        <h1 th:text="${editMode ? '카테고리 수정' : '카테고리 등록'}">카테고리 등록</h1>
+        <p>모임 개설 화면에 표시할 카테고리 정보를 입력해주세요.</p>
+
+        <form th:action="${editMode}
+                    ? @{/admin/categories/{categoryId}(categoryId=${categoryId})}
+                    : @{/admin/categories}"
+              th:object="${categoryForm}"
+              method="post"
+              novalidate>
+            <div class="form-error-summary"
+                 th:if="${#fields.hasGlobalErrors()}"
+                 role="alert">
+                <p th:each="error : ${#fields.globalErrors()}"
+                   th:text="${error}">
+                    입력값을 확인해주세요.
+                </p>
+            </div>
+
+            <div class="admin-category-form-field">
+                <label for="categoryName">
+                    카테고리명 <span aria-hidden="true">*</span>
+                </label>
+                <input id="categoryName"
+                       type="text"
+                       th:field="*{categoryName}"
+                       minlength="2"
+                       maxlength="50"
+                       required
+                       autocomplete="off">
+                <p class="category-field-help">2자 이상 50자 이하, 다른 카테고리와 중복할 수 없습니다.</p>
+                <p class="category-field-error" th:errors="*{categoryName}"></p>
+            </div>
+
+            <div class="admin-category-form-field">
+                <label for="description">설명</label>
+                <textarea id="description"
+                          th:field="*{description}"
+                          maxlength="200"
+                          rows="4"></textarea>
+                <p class="category-field-help">관리자가 카테고리 용도를 확인할 수 있는 설명이며 최대 200자입니다.</p>
+                <p class="category-field-error" th:errors="*{description}"></p>
+            </div>
+
+            <div class="admin-category-form-grid">
+                <div class="admin-category-form-field">
+                    <label for="displayOrder">
+                        노출 순서 <span aria-hidden="true">*</span>
+                    </label>
+                    <input id="displayOrder"
+                           type="number"
+                           th:field="*{displayOrder}"
+                           min="1"
+                           step="1"
+                           required>
+                    <p class="category-field-help">1 이상의 정수를 입력해주세요.</p>
+                    <p class="category-field-error" th:errors="*{displayOrder}"></p>
+                </div>
+
+                <div class="admin-category-form-field">
+                    <label for="useYn">
+                        사용 여부 <span aria-hidden="true">*</span>
+                    </label>
+                    <select id="useYn" th:field="*{useYn}" required>
+                        <option value="Y">사용 중</option>
+                        <option value="N">사용 중지</option>
+                    </select>
+                    <p class="category-field-help">사용 중인 카테고리만 신규 모임 개설 화면에 표시됩니다.</p>
+                    <p class="category-field-error" th:errors="*{useYn}"></p>
+                </div>
+            </div>
+
+            <div class="admin-category-form-actions">
+                <a class="admin-button admin-button-secondary"
+                   th:href="@{/admin/categories}">
+                    취소
+                </a>
+                <button class="admin-button admin-button-primary"
+                        type="submit"
+                        th:text="${editMode ? '수정 저장' : '등록'}">
+                    등록
+                </button>
+            </div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

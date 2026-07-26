@@ -50,6 +50,20 @@ class HobbyMateUserDetailsServiceTest {
     }
 
     @Test
+    void superAdministratorInheritsAdminRole() {
+        when(memberDao.findAuthByLoginId("super1"))
+                .thenReturn(member("super1", "SUPER_ADMIN", "ACTIVE"));
+
+        UserDetails user = service().loadUserByUsername("super1");
+
+        assertThat(user.getAuthorities()).extracting("authority")
+                .containsExactlyInAnyOrder(
+                        "ROLE_USER",
+                        "ROLE_ADMIN",
+                        "ROLE_SUPER_ADMIN");
+    }
+
+    @Test
     void missingAndInactiveMembersAreRejectedWithSameExceptionType() {
         when(memberDao.findAuthByLoginId("missing1")).thenReturn(null);
         when(memberDao.findAuthByLoginId("withdrawn1"))

@@ -38,7 +38,7 @@
             SELECT 1
             FROM HM_MEMBER
             WHERE MEMBER_ID = #{memberId}
-              AND MEMBER_ROLE = 'ADMIN'
+              AND MEMBER_ROLE IN ('ADMIN', 'SUPER_ADMIN')
               AND MEMBER_STATUS = 'ACTIVE'
         )
     </select>

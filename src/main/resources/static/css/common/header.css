@@ -161,6 +161,12 @@
     background: #e8f9ed;
 }
 
+.profile-dropdown-item.is-active {
+    color: #167a38;
+    background: #e8f9ed;
+    font-weight: 750;
+}
+
 @media (max-width: 600px) {
     .site-header {
         min-height: 64px;

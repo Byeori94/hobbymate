@@ -40,7 +40,8 @@
                CATEGORY_NAME AS categoryName
         FROM HM_CATEGORY
         WHERE USE_YN = 'Y'
-        ORDER BY DISPLAY_ORDER, CATEGORY_NAME
+          AND PARENT_CATEGORY_ID IS NULL
+        ORDER BY DISPLAY_ORDER, CATEGORY_ID
     </select>
 
     <select id="existsActiveCategory" resultType="boolean">
@@ -49,6 +50,7 @@
             FROM HM_CATEGORY
             WHERE CATEGORY_ID = #{categoryId}
               AND USE_YN = 'Y'
+              AND PARENT_CATEGORY_ID IS NULL
         )
     </select>
 

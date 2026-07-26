@@ -39,6 +39,13 @@
                    th:href="@{/admin/member-verifications}">
                     본인인증처리(임시)
                 </a>
+                <a class="profile-dropdown-item"
+                   role="menuitem"
+                   sec:authorize="hasRole('ADMIN')"
+                   th:classappend="${activeAdminMenu == 'categories'} ? ' is-active'"
+                   th:href="@{/admin/categories}">
+                    카테고리 관리
+                </a>
                 <a class="profile-dropdown-item" role="menuitem" th:href="@{/member/mypage}">
                     마이페이지
                 </a>

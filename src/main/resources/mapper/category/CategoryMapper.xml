@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byeori.hobbymate.category.dao.CategoryDao">
+
+    <select id="isActiveAdmin" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM HM_MEMBER
+            WHERE MEMBER_ID = #{memberId}
+              AND MEMBER_ROLE IN ('ADMIN', 'SUPER_ADMIN')
+              AND MEMBER_STATUS = 'ACTIVE'
+        )
+    </select>
+
+    <select id="findAdminCategories"
+            resultType="com.byeori.hobbymate.category.vo.AdminCategory">
+        SELECT C.CATEGORY_ID AS categoryId,
+               C.CATEGORY_NAME AS categoryName,
+               C.DESCRIPTION AS description,
+               C.DISPLAY_ORDER AS displayOrder,
+               C.USE_YN AS useYn,
+               COALESCE(CLUB_COUNTS.CLUB_COUNT, 0) AS clubCount,
+               C.CREATED_AT AS createdAt,
+               C.UPDATED_AT AS updatedAt
+        FROM HM_CATEGORY C
+        LEFT JOIN (
+            SELECT CATEGORY_ID,
+                   COUNT(*) AS CLUB_COUNT
+            FROM HM_CLUB
+            GROUP BY CATEGORY_ID
+        ) CLUB_COUNTS
+               ON CLUB_COUNTS.CATEGORY_ID = C.CATEGORY_ID
+        <where>
+            C.PARENT_CATEGORY_ID IS NULL
+            <if test="keyword != null and keyword != ''">
+                AND C.CATEGORY_NAME LIKE #{keywordPattern} ESCAPE '!'
+            </if>
+            <if test="useYn != 'ALL'">
+                AND C.USE_YN = #{useYn}
+            </if>
+        </where>
+        ORDER BY C.DISPLAY_ORDER ASC, C.CATEGORY_ID ASC
+    </select>
+
+    <sql id="categoryColumns">
+        SELECT C.CATEGORY_ID AS categoryId,
+               C.CATEGORY_NAME AS categoryName,
+               C.DESCRIPTION AS description,
+               C.DISPLAY_ORDER AS displayOrder,
+               C.USE_YN AS useYn,
+               (
+                   SELECT COUNT(*)
+                   FROM HM_CLUB CLUB
+                   WHERE CLUB.CATEGORY_ID = C.CATEGORY_ID
+               ) AS clubCount,
+               C.CREATED_AT AS createdAt,
+               C.UPDATED_AT AS updatedAt
+        FROM HM_CATEGORY C
+        WHERE C.CATEGORY_ID = #{categoryId}
+          AND C.PARENT_CATEGORY_ID IS NULL
+    </sql>
+
+    <select id="findById"
+            resultType="com.byeori.hobbymate.category.vo.AdminCategory">
+        <include refid="categoryColumns"/>
+    </select>
+
+    <select id="findByIdForUpdate"
+            resultType="com.byeori.hobbymate.category.vo.AdminCategory">
+        <include refid="categoryColumns"/>
+        FOR UPDATE
+    </select>
+
+    <select id="existsName" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM HM_CATEGORY
+            WHERE PARENT_CATEGORY_ID IS NULL
+              AND CATEGORY_NAME = #{categoryName}
+            <if test="excludedCategoryId != null">
+              AND CATEGORY_ID &lt;&gt; #{excludedCategoryId}
+            </if>
+        )
+    </select>
+
+    <select id="findNextDisplayOrder" resultType="int">
+        SELECT COALESCE(MAX(DISPLAY_ORDER), 0) + 1
+        FROM HM_CATEGORY
+        WHERE PARENT_CATEGORY_ID IS NULL
+    </select>
+
+    <insert id="insertCategory"
+            parameterType="com.byeori.hobbymate.category.vo.CategoryCommand">
+        INSERT INTO HM_CATEGORY (
+            PARENT_CATEGORY_ID,
+            CATEGORY_NAME,
+            DESCRIPTION,
+            DISPLAY_ORDER,
+            USE_YN,
+            CREATED_BY,
+            UPDATED_BY
+        ) VALUES (
+            NULL,
+            #{categoryName},
+            #{description},
+            #{displayOrder},
+            #{useYn},
+            #{adminMemberId},
+            #{adminMemberId}
+        )
+    </insert>
+
+    <update id="updateCategory">
+        UPDATE HM_CATEGORY
+        SET CATEGORY_NAME = #{command.categoryName},
+            DESCRIPTION = #{command.description},
+            DISPLAY_ORDER = #{command.displayOrder},
+            USE_YN = #{command.useYn},
+            UPDATED_BY = #{command.adminMemberId},
+            UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE CATEGORY_ID = #{categoryId}
+          AND PARENT_CATEGORY_ID IS NULL
+    </update>
+
+    <update id="updateStatus">
+        UPDATE HM_CATEGORY
+        SET USE_YN = #{useYn},
+            UPDATED_BY = #{adminMemberId},
+            UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE CATEGORY_ID = #{categoryId}
+          AND PARENT_CATEGORY_ID IS NULL
+          AND USE_YN &lt;&gt; #{useYn}
+    </update>
+
+    <select id="findAllIdsForUpdate" resultType="long">
+        SELECT CATEGORY_ID
+        FROM HM_CATEGORY
+        WHERE PARENT_CATEGORY_ID IS NULL
+        ORDER BY CATEGORY_ID
+        FOR UPDATE
+    </select>
+
+    <update id="updateDisplayOrder">
+        UPDATE HM_CATEGORY
+        SET DISPLAY_ORDER = #{displayOrder},
+            UPDATED_BY = #{adminMemberId},
+            UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE CATEGORY_ID = #{categoryId}
+          AND PARENT_CATEGORY_ID IS NULL
+    </update>
+
+</mapper>

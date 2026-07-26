@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>모임 카테고리 관리 | HobbyMate</title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/admin-member-verifications.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/admin-categories.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/pages/admin-categories.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="admin-category-page">
+    <div class="admin-page-heading admin-category-heading">
+        <div>
+            <h1>모임 카테고리 관리</h1>
+            <p>모임 개설 시 사용할 카테고리와 노출 순서를 관리합니다.</p>
+        </div>
+        <a class="admin-button admin-button-primary"
+           th:href="@{/admin/categories/new}">
+            카테고리 등록
+        </a>
+    </div>
+
+    <div class="admin-alert admin-alert-success"
+         th:if="${successMessage}"
+         role="status"
+         th:text="${successMessage}"></div>
+    <div class="admin-alert admin-alert-error"
+         th:if="${errorMessage}"
+         role="alert"
+         th:text="${errorMessage}"></div>
+
+    <form class="admin-search admin-category-search"
+          th:action="@{/admin/categories}"
+          method="get">
+        <label for="keyword">카테고리명</label>
+        <input id="keyword"
+               name="keyword"
+               type="search"
+               maxlength="100"
+               th:value="${search.keyword}"
+               placeholder="카테고리명을 입력하세요">
+        <label for="useYn">사용 여부</label>
+        <select id="useYn" name="useYn">
+            <option value="ALL" th:selected="${search.useYn == 'ALL'}">전체</option>
+            <option value="Y" th:selected="${search.useYn == 'Y'}">사용 중</option>
+            <option value="N" th:selected="${search.useYn == 'N'}">사용 중지</option>
+        </select>
+        <button class="admin-button admin-button-primary" type="submit">검색</button>
+        <a class="admin-button admin-button-secondary"
+           th:href="@{/admin/categories}">
+            초기화
+        </a>
+    </form>
+
+    <section class="member-verification-section admin-category-section"
+             aria-labelledby="category-list-title">
+        <div class="section-heading admin-category-section-heading">
+            <div>
+                <h2 id="category-list-title">카테고리 목록</h2>
+                <p>
+                    총 <strong th:text="${#lists.size(categories)}">0</strong>개의 카테고리가 조회되었습니다.
+                </p>
+            </div>
+            <button class="admin-button admin-button-primary"
+                    type="submit"
+                    form="category-reorder-form"
+                    th:if="${reorderAvailable and !#lists.isEmpty(categories)}">
+                순서 저장
+            </button>
+        </div>
+
+        <p class="admin-category-order-notice"
+           th:if="${!reorderAvailable and !#lists.isEmpty(categories)}">
+            노출 순서를 변경하려면 검색 조건을 초기화해주세요.
+        </p>
+
+        <form id="category-reorder-form"
+              th:action="@{/admin/categories/reorder}"
+              method="post"
+              data-confirm-form="입력한 순서대로 카테고리 노출 순서를 저장하시겠습니까?">
+            <div class="admin-table-wrap">
+                <table class="admin-table admin-category-table">
+                    <thead>
+                    <tr>
+                        <th>번호</th>
+                        <th>카테고리명</th>
+                        <th>설명</th>
+                        <th>노출 순서</th>
+                        <th>사용 여부</th>
+                        <th>사용 모임 수</th>
+                        <th>등록일</th>
+                        <th>수정일</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="category, categoryStat : ${categories}">
+                        <td th:text="${categoryStat.count}">1</td>
+                        <td class="category-name-cell"
+                            th:text="${category.categoryName}">운동</td>
+                        <td class="category-description-cell"
+                            th:text="${#strings.isEmpty(category.description) ? '-' : category.description}">
+                            카테고리 설명
+                        </td>
+                        <td>
+                            <th:block th:if="${reorderAvailable}">
+                                <input type="hidden"
+                                       name="categoryIds"
+                                       th:value="${category.categoryId}">
+                                <label class="sr-only"
+                                       th:for="${'display-order-' + category.categoryId}"
+                                       th:text="${category.categoryName + ' 노출 순서'}">
+                                    노출 순서
+                                </label>
+                                <input class="category-order-input"
+                                       th:id="${'display-order-' + category.categoryId}"
+                                       name="displayOrders"
+                                       type="number"
+                                       min="1"
+                                       step="1"
+                                       required
+                                       th:value="${category.displayOrder}">
+                            </th:block>
+                            <span th:unless="${reorderAvailable}"
+                                  th:text="${category.displayOrder}">1</span>
+                        </td>
+                        <td>
+                            <span class="category-status-badge"
+                                  th:classappend="${category.used} ? ' is-active' : ' is-inactive'"
+                                  th:text="${category.useLabel()}">
+                                사용 중
+                            </span>
+                        </td>
+                        <td th:text="${category.clubCount}">0</td>
+                        <td th:text="${category.createdAt == null ? '-' : #temporals.format(category.createdAt, 'yyyy.MM.dd')}">
+                            2026.01.01
+                        </td>
+                        <td th:text="${category.updatedAt == null ? '-' : #temporals.format(category.updatedAt, 'yyyy.MM.dd')}">
+                            2026.01.01
+                        </td>
+                        <td class="category-actions">
+                            <a class="admin-button admin-button-small admin-button-secondary"
+                               th:href="@{/admin/categories/{categoryId}/edit(categoryId=${category.categoryId})}">
+                                수정
+                            </a>
+                            <button class="admin-button admin-button-small"
+                                    th:classappend="${category.used} ? 'admin-button-danger' : 'admin-button-primary'"
+                                    type="submit"
+                                    th:form="${'category-status-form-' + category.categoryId}"
+                                    th:text="${category.used} ? '사용 중지' : '사용 재개'">
+                                사용 중지
+                            </button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(categories)}">
+                        <td class="empty-cell" colspan="9">
+                            등록되거나 조건에 맞는 카테고리가 없습니다.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </form>
+
+        <th:block th:each="category : ${categories}">
+            <form class="category-status-form"
+                  th:id="${'category-status-form-' + category.categoryId}"
+                  th:action="@{/admin/categories/{categoryId}/status(categoryId=${category.categoryId})}"
+                  method="post"
+                  th:attr="data-confirm-form=${category.used
+                      ? '이 카테고리를 사용 중지하면 신규 모임 개설 화면에서 선택할 수 없습니다. 계속하시겠습니까?'
+                      : '이 카테고리를 다시 사용 설정하시겠습니까?'}">
+            </form>
+        </th:block>
+    </section>
+</main>
+</body>
+</html>
