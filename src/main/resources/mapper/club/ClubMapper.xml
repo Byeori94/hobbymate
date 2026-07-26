@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byeori.hobbymate.club.dao.ClubDao">
+
+    <select id="findMemberForCreation"
+            resultType="com.byeori.hobbymate.club.vo.ClubCreationMember">
+        SELECT MEMBER_ID AS memberId,
+               MEMBER_STATUS AS memberStatus,
+               IDENTITY_VERIFIED_YN AS identityVerifiedYn
+        FROM HM_MEMBER
+        WHERE MEMBER_ID = #{memberId}
+    </select>
+
+    <select id="findMemberForCreationForUpdate"
+            resultType="com.byeori.hobbymate.club.vo.ClubCreationMember">
+        SELECT MEMBER_ID AS memberId,
+               MEMBER_STATUS AS memberStatus,
+               IDENTITY_VERIFIED_YN AS identityVerifiedYn
+        FROM HM_MEMBER
+        WHERE MEMBER_ID = #{memberId}
+        FOR UPDATE
+    </select>
+
+    <select id="countLedActiveOrBlockedClubs" resultType="int">
+        SELECT COUNT(*)
+        FROM HM_CLUB C
+        INNER JOIN HM_CLUB_MEMBER CM
+                ON CM.CLUB_ID = C.CLUB_ID
+               AND CM.MEMBER_ID = #{memberId}
+               AND CM.CLUB_ROLE = 'LEADER'
+               AND CM.MEMBER_STATUS = 'ACTIVE'
+        WHERE C.CLUB_STATUS IN ('ACTIVE', 'BLOCKED')
+    </select>
+
+    <select id="findActiveCategories"
+            resultType="com.byeori.hobbymate.club.vo.ClubCategory">
+        SELECT CATEGORY_ID AS categoryId,
+               CATEGORY_NAME AS categoryName
+        FROM HM_CATEGORY
+        WHERE USE_YN = 'Y'
+        ORDER BY DISPLAY_ORDER, CATEGORY_NAME
+    </select>
+
+    <select id="existsActiveCategory" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM HM_CATEGORY
+            WHERE CATEGORY_ID = #{categoryId}
+              AND USE_YN = 'Y'
+        )
+    </select>
+
+    <insert id="insertClub"
+            parameterType="com.byeori.hobbymate.club.vo.ClubCreation"
+            useGeneratedKeys="true"
+            keyProperty="clubId"
+            keyColumn="CLUB_ID">
+        INSERT INTO HM_CLUB (
+            OWNER_MEMBER_ID,
+            CATEGORY_ID,
+            CLUB_NAME,
+            CLUB_SUMMARY,
+            CLUB_DESCRIPTION,
+            REPRESENTATIVE_IMAGE_URL,
+            ACTIVITY_REGION,
+            GENDER_POLICY,
+            MIN_AGE,
+            MAX_AGE,
+            MAX_MEMBER_COUNT,
+            JOIN_TYPE,
+            JOIN_GUIDE,
+            CLUB_STATUS,
+            RECRUIT_STATUS
+        ) VALUES (
+            #{ownerMemberId},
+            #{categoryId},
+            #{clubName},
+            #{clubSummary},
+            #{clubDescription},
+            #{representativeImageUrl},
+            #{activityRegion},
+            #{genderPolicy},
+            #{minAge},
+            #{maxAge},
+            #{maxMemberCount},
+            #{joinType},
+            #{joinGuide},
+            'ACTIVE',
+            'OPEN'
+        )
+    </insert>
+
+    <insert id="insertLeader"
+            parameterType="com.byeori.hobbymate.club.vo.ClubLeaderRegistration">
+        INSERT INTO HM_CLUB_MEMBER (
+            CLUB_ID,
+            MEMBER_ID,
+            CLUB_ROLE,
+            MEMBER_STATUS,
+            JOINED_AT
+        ) VALUES (
+            #{clubId},
+            #{memberId},
+            'LEADER',
+            'ACTIVE',
+            CURRENT_TIMESTAMP
+        )
+    </insert>
+
+</mapper>

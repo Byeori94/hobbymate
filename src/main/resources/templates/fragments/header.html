@@ -42,6 +42,9 @@
                 <a class="profile-dropdown-item" role="menuitem" th:href="@{/member/mypage}">
                     마이페이지
                 </a>
+                <a class="profile-dropdown-item" role="menuitem" th:href="@{/clubs/new}">
+                    모임 개설
+                </a>
                 <form class="profile-logout-form" th:action="@{/auth/logout}" method="post">
                     <button class="profile-dropdown-item" type="submit" role="menuitem">
                         로그아웃

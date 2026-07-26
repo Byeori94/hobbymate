@@ -36,6 +36,8 @@ public class SecurityConfig {
                         .hasRole("ADMIN")
                         .requestMatchers("/member/mypage", "/member/mypage/**")
                         .hasRole("USER")
+                        .requestMatchers("/clubs/**")
+                        .hasRole("USER")
                         .anyRequest()
                         .authenticated())
                 .formLogin(form -> form

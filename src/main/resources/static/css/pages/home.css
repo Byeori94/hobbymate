@@ -27,6 +27,12 @@ body {
     font-weight: 650;
 }
 
+.home-message-error {
+    border-color: #efb5b5;
+    color: #9f2525;
+    background: #fff1f1;
+}
+
 .hero h1 {
     margin: 0 0 14px;
     font-size: clamp(32px, 5vw, 52px);

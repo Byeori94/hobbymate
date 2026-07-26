@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>모임 개설 | HobbyMate</title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/club-create.css(v='20260726-3')}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/pages/club-create.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="club-create-page">
+    <section class="club-create-heading" aria-labelledby="club-create-title">
+        <h1 id="club-create-title">모임 개설</h1>
+        <p>함께 취미를 즐길 새로운 모임을 만들어 보세요.</p>
+    </section>
+
+    <form class="club-create-form"
+          th:action="@{/clubs}"
+          th:object="${clubCreateRequest}"
+          method="post"
+          enctype="multipart/form-data"
+          novalidate>
+        <div class="form-error-summary"
+             th:if="${#fields.hasGlobalErrors()}"
+             role="alert">
+            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}">입력값을 확인해 주세요.</p>
+        </div>
+
+        <section class="form-card" aria-labelledby="basic-info-title">
+            <div class="form-section-heading">
+                <h2 id="basic-info-title">기본 정보</h2>
+                <p><span aria-hidden="true">*</span> 표시는 필수 입력 항목입니다.</p>
+            </div>
+
+            <div class="form-field">
+                <label for="clubName">모임명 <span class="required">*</span></label>
+                <input id="clubName"
+                       type="text"
+                       th:field="*{clubName}"
+                       minlength="2"
+                       maxlength="50"
+                       required
+                       autocomplete="off">
+                <p class="field-help">2자 이상 50자 이하로 입력해 주세요.</p>
+                <p class="field-error" th:errors="*{clubName}"></p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="categoryId">카테고리 <span class="required">*</span></label>
+                    <select id="categoryId" th:field="*{categoryId}" required>
+                        <option value="">카테고리를 선택해 주세요</option>
+                        <option th:each="category : ${categories}"
+                                th:value="${category.categoryId}"
+                                th:text="${category.categoryName}">
+                            카테고리
+                        </option>
+                    </select>
+                    <p class="field-error" th:errors="*{categoryId}"></p>
+                    <p class="field-error"
+                       th:if="${#lists.isEmpty(categories)}">
+                        현재 선택할 수 있는 카테고리가 없습니다.
+                    </p>
+                </div>
+
+                <div class="form-field">
+                    <label for="activityRegion">활동 지역 <span class="required">*</span></label>
+                    <input id="activityRegion"
+                           type="text"
+                           th:field="*{activityRegion}"
+                           maxlength="200"
+                           placeholder="예: 서울 마포구"
+                           required>
+                    <p class="field-help">지도 API 없이 현재는 지역명을 직접 입력합니다.</p>
+                    <p class="field-error" th:errors="*{activityRegion}"></p>
+                </div>
+            </div>
+
+            <div class="form-field">
+                <label for="clubSummary">한줄 소개 <span class="required">*</span></label>
+                <input id="clubSummary"
+                       type="text"
+                       th:field="*{clubSummary}"
+                       maxlength="500"
+                       required>
+                <p class="field-error" th:errors="*{clubSummary}"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="clubDescription">모임 소개 <span class="required">*</span></label>
+                <textarea id="clubDescription"
+                          th:field="*{clubDescription}"
+                          minlength="10"
+                          maxlength="2000"
+                          rows="8"
+                          required></textarea>
+                <div class="field-meta">
+                    <p class="field-help">일반 텍스트로 10자 이상 2,000자 이하로 입력해 주세요.</p>
+                    <span class="character-count" data-description-count>0 / 2,000</span>
+                </div>
+                <p class="field-error" th:errors="*{clubDescription}"></p>
+            </div>
+        </section>
+
+        <section class="form-card" aria-labelledby="image-title">
+            <div class="form-section-heading">
+                <h2 id="image-title">대표 이미지</h2>
+                <p>선택 입력 · 권장 비율 16:9</p>
+            </div>
+
+            <div class="image-upload-layout">
+                <div class="image-preview" data-image-preview>
+                    <span>이미지 미리보기</span>
+                    <img alt="선택한 모임 대표 이미지 미리보기" hidden>
+                </div>
+                <div class="form-field image-input-field">
+                    <label for="representativeImage">대표 이미지 선택</label>
+                    <input id="representativeImage"
+                           type="file"
+                           th:field="*{representativeImage}"
+                           accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                    <p class="field-help">JPG, JPEG, PNG, WEBP · 최대 5MB · 1장</p>
+                    <p class="field-error" th:errors="*{representativeImage}"></p>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-card" aria-labelledby="join-policy-title">
+            <div class="form-section-heading">
+                <h2 id="join-policy-title">가입 조건</h2>
+                <p>가입 신청 시 적용할 조건입니다.</p>
+            </div>
+
+            <fieldset class="choice-field">
+                <legend>성별 유형 <span class="required">*</span></legend>
+                <label><input type="radio" th:field="*{genderPolicy}" value="MIXED"> 혼성</label>
+                <label><input type="radio" th:field="*{genderPolicy}" value="FEMALE"> 여성</label>
+                <label><input type="radio" th:field="*{genderPolicy}" value="MALE"> 남성</label>
+                <p class="field-error" th:errors="*{genderPolicy}"></p>
+            </fieldset>
+
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="minAge">최소 연령 <span class="required">*</span></label>
+                    <input id="minAge"
+                           type="number"
+                           th:field="*{minAge}"
+                           min="18"
+                           max="100"
+                           inputmode="numeric"
+                           required>
+                    <p class="field-error" th:errors="*{minAge}"></p>
+                </div>
+                <div class="form-field">
+                    <label for="maxAge">최대 연령 <span class="required">*</span></label>
+                    <input id="maxAge"
+                           type="number"
+                           th:field="*{maxAge}"
+                           min="18"
+                           max="100"
+                           inputmode="numeric"
+                           required>
+                    <p class="field-error" th:errors="*{maxAge}"></p>
+                </div>
+            </div>
+
+            <div class="form-field">
+                <label for="maxMemberCount">최대 정원 <span class="required">*</span></label>
+                <input id="maxMemberCount"
+                       type="number"
+                       th:field="*{maxMemberCount}"
+                       min="2"
+                       max="1000"
+                       inputmode="numeric"
+                       required>
+                <p class="field-help">개설자가 첫 회원으로 포함되므로 2명 이상 입력해 주세요.</p>
+                <p class="field-error" th:errors="*{maxMemberCount}"></p>
+            </div>
+
+            <fieldset class="choice-field">
+                <legend>가입 방식 <span class="required">*</span></legend>
+                <label>
+                    <input type="radio" th:field="*{joinType}" value="IMMEDIATE">
+                    즉시 가입
+                </label>
+                <label>
+                    <input type="radio" th:field="*{joinType}" value="APPROVAL">
+                    승인 후 가입
+                </label>
+                <p class="field-error" th:errors="*{joinType}"></p>
+            </fieldset>
+
+            <div class="form-field" data-join-guide-field>
+                <label for="joinGuide">가입 신청 안내 또는 질문</label>
+                <textarea id="joinGuide"
+                          th:field="*{joinGuide}"
+                          maxlength="500"
+                          rows="4"
+                          placeholder="예: 모임에 가입하고 싶은 이유를 알려주세요."></textarea>
+                <p class="field-help">승인 후 가입을 선택한 경우에만 사용하며 최대 500자입니다.</p>
+                <p class="field-error" th:errors="*{joinGuide}"></p>
+            </div>
+
+            <div class="fixed-policy">
+                <strong>최초 모집 상태</strong>
+                <span>모집 중(OPEN)</span>
+                <p>모임 개설 시 모집 상태는 자동으로 모집 중으로 설정됩니다.</p>
+            </div>
+        </section>
+
+        <div class="form-actions">
+            <a class="secondary-button" th:href="@{/}">취소</a>
+            <button class="primary-button"
+                    type="submit"
+                    th:disabled="${#lists.isEmpty(categories)}"
+                    data-submit-button>
+                모임 개설
+            </button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

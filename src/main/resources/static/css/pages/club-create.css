@@ -1,0 +1,311 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    color: #33383f;
+    background: #f2f4f5;
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.club-create-page {
+    width: min(100% - 40px, 920px);
+    margin: 0 auto;
+    padding: 52px 0 80px;
+}
+
+.club-create-heading {
+    margin-bottom: 26px;
+}
+
+.club-create-heading h1 {
+    margin: 0 0 10px;
+    font-size: clamp(30px, 5vw, 42px);
+}
+
+.club-create-heading p,
+.form-section-heading p,
+.field-help,
+.fixed-policy p {
+    color: #68727d;
+}
+
+.club-create-heading p,
+.form-section-heading p,
+.field-help,
+.field-error,
+.fixed-policy p {
+    margin: 0;
+    line-height: 1.55;
+}
+
+.club-create-form {
+    display: grid;
+    gap: 22px;
+}
+
+.form-card {
+    padding: 30px;
+    border: 1px solid #dce2e7;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(35, 50, 60, 0.06);
+}
+
+.form-section-heading {
+    margin-bottom: 25px;
+}
+
+.form-section-heading h2 {
+    margin: 0 0 6px;
+    font-size: 22px;
+}
+
+.form-section-heading p,
+.field-help,
+.field-error,
+.character-count {
+    font-size: 13px;
+}
+
+.form-field {
+    margin-top: 20px;
+}
+
+.form-section-heading + .form-field {
+    margin-top: 20px;
+}
+
+.form-field label,
+.choice-field legend {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.required {
+    color: #24b957;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="file"],
+select,
+textarea {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid #cbd4dc;
+    border-radius: 10px;
+    color: #33383f;
+    background: #fff;
+    font: inherit;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+    padding: 12px 14px;
+}
+
+input[type="file"] {
+    padding: 9px;
+}
+
+textarea {
+    resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #2bc65b;
+    outline: 3px solid rgba(43, 198, 91, 0.16);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.field-help {
+    margin-top: 7px;
+}
+
+.field-error {
+    margin-top: 6px;
+    color: #a52626;
+    font-weight: 650;
+}
+
+.field-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 7px;
+}
+
+.character-count {
+    flex: 0 0 auto;
+    color: #68727d;
+}
+
+.choice-field {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin: 20px 0 0;
+    padding: 0;
+    border: 0;
+}
+
+.choice-field legend {
+    width: 100%;
+}
+
+.choice-field label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+}
+
+.choice-field input {
+    width: 18px;
+    height: 18px;
+    accent-color: #2bc65b;
+}
+
+.choice-field .field-error {
+    width: 100%;
+}
+
+.image-upload-layout {
+    display: grid;
+    grid-template-columns: minmax(240px, 42%) 1fr;
+    gap: 24px;
+    align-items: center;
+}
+
+.image-preview {
+    display: grid;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    place-items: center;
+    border: 1px dashed #afbac4;
+    border-radius: 14px;
+    color: #7a858e;
+    background: #f7f9fa;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-input-field {
+    margin: 0;
+}
+
+.fixed-policy {
+    margin-top: 22px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    background: #edf9f1;
+}
+
+.fixed-policy strong {
+    margin-right: 10px;
+}
+
+.fixed-policy span {
+    color: #16833c;
+    font-weight: 750;
+}
+
+.fixed-policy p {
+    margin-top: 5px;
+    font-size: 13px;
+}
+
+.form-error-summary {
+    padding: 14px 16px;
+    border: 1px solid #efb5b5;
+    border-radius: 10px;
+    color: #9f2525;
+    background: #fff1f1;
+}
+
+.form-error-summary p {
+    margin: 0;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.primary-button,
+.secondary-button {
+    min-width: 120px;
+    min-height: 50px;
+    padding: 13px 20px;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 750;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.primary-button {
+    border: 1px solid #2bc65b;
+    color: #fff;
+    background: #2bc65b;
+}
+
+.primary-button:hover:not(:disabled) {
+    background: #21aa4c;
+    transform: translateY(-1px);
+}
+
+.primary-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.secondary-button {
+    border: 1px solid #cbd4dc;
+    color: #46515b;
+    background: #fff;
+}
+
+.secondary-button:hover {
+    background: #f7f9fa;
+}
+
+@media (max-width: 680px) {
+    .club-create-page {
+        width: min(100% - 28px, 920px);
+        padding-top: 34px;
+    }
+
+    .form-card {
+        padding: 22px 18px;
+    }
+
+    .form-grid,
+    .image-upload-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
