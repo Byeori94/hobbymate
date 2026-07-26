@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${cancelMode ? '임시 본인인증 취소' : '임시 본인인증 처리'} + ' | HobbyMate'">본인인증 처리</title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/admin-member-verifications.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/pages/admin-member-verification-form.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="member-verification-page verification-detail-page">
+    <a class="back-link" th:href="@{/admin/member-verifications}">← 목록으로</a>
+
+    <section class="verification-form-card" th:if="${!cancelMode}">
+        <h1>임시 본인인증 처리</h1>
+        <p>
+            <strong th:text="${member.loginId}">user01</strong>
+            회원의 정보를 확인하거나 수정한 뒤 처리하세요.
+        </p>
+        <form data-individual-confirm="process"
+              th:action="@{/admin/member-verifications/{memberId}/temporary(memberId=${member.memberId})}"
+              th:object="${verificationRequest}"
+              method="post">
+            <div class="form-error-summary"
+                 th:if="${#fields.hasAnyErrors()}"
+                 role="alert">
+                <p th:each="error : ${#fields.allErrors()}" th:text="${error}"></p>
+            </div>
+            <div class="admin-form-grid">
+                <label>
+                    이름
+                    <input type="text" th:field="*{name}" maxlength="50" required>
+                </label>
+                <label>
+                    생년월일
+                    <input id="birthDate"
+                           name="birthDate"
+                           type="date"
+                           th:value="${verificationRequest.birthDate == null ? '' : #temporals.format(verificationRequest.birthDate, 'yyyy-MM-dd')}"
+                           required>
+                </label>
+                <fieldset>
+                    <legend>성별</legend>
+                    <label><input type="radio" th:field="*{gender}" value="FEMALE" required> 여성</label>
+                    <label><input type="radio" th:field="*{gender}" value="MALE"> 남성</label>
+                </fieldset>
+                <label>
+                    휴대폰 번호
+                    <input type="tel"
+                           th:field="*{phone}"
+                           inputmode="numeric"
+                           placeholder="010-1234-5678"
+                           required>
+                </label>
+                <label class="full-row">
+                    인증 처리 사유
+                    <textarea th:field="*{reason}" maxlength="2000" rows="4" required></textarea>
+                </label>
+            </div>
+            <div class="form-actions">
+                <a class="admin-button admin-button-secondary" th:href="@{/admin/member-verifications}">취소</a>
+                <button class="admin-button admin-button-primary" type="submit">임시 본인인증 처리</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="verification-form-card" th:if="${cancelMode}">
+        <h1>임시 본인인증 취소</h1>
+        <p>
+            <strong th:text="${member.loginId}">user01</strong>
+            회원의 임시 본인인증을 취소합니다.
+        </p>
+        <dl class="verification-summary">
+            <div><dt>닉네임</dt><dd th:text="${member.nickname}">닉네임</dd></div>
+            <div><dt>이름</dt><dd th:text="${member.name}">이름</dd></div>
+            <div><dt>인증 방식</dt><dd>임시 본인인증</dd></div>
+            <div><dt>인증 처리일시</dt><dd th:text="${member.verifiedAt == null ? '-' : #temporals.format(member.verifiedAt, 'yyyy.MM.dd HH:mm')}">-</dd></div>
+        </dl>
+        <form data-individual-confirm="cancel"
+              th:action="@{/admin/member-verifications/{memberId}/temporary/cancel(memberId=${member.memberId})}"
+              th:object="${cancelRequest}"
+              method="post">
+            <div class="form-error-summary"
+                 th:if="${#fields.hasAnyErrors()}"
+                 role="alert">
+                <p th:each="error : ${#fields.allErrors()}" th:text="${error}"></p>
+            </div>
+            <label class="full-row">
+                인증 취소 사유
+                <textarea th:field="*{reason}" maxlength="2000" rows="4" required></textarea>
+            </label>
+            <p class="danger-guide">본인인증이 취소되면 모임 개설 및 가입이 제한될 수 있습니다.</p>
+            <div class="form-actions">
+                <a class="admin-button admin-button-secondary" th:href="@{/admin/member-verifications}">돌아가기</a>
+                <button class="admin-button admin-button-danger" type="submit">임시 본인인증 취소</button>
+            </div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

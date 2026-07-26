@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byeori.hobbymate.admin.dao.AdminMemberVerificationDao">
+
+    <sql id="searchCondition">
+        <if test="search.keyword != null and search.keyword != ''">
+            <choose>
+                <when test="search.searchType == 'LOGIN_ID'">
+                    AND M.LOGIN_ID LIKE CONCAT('%', #{search.keyword}, '%')
+                </when>
+                <when test="search.searchType == 'NICKNAME'">
+                    AND M.NICKNAME LIKE CONCAT('%', #{search.keyword}, '%')
+                </when>
+                <when test="search.searchType == 'NAME'">
+                    AND M.NAME LIKE CONCAT('%', #{search.keyword}, '%')
+                </when>
+                <when test="search.searchType == 'PHONE'">
+                    AND REPLACE(REPLACE(M.PHONE, '-', ''), ' ', '')
+                        LIKE CONCAT('%', REPLACE(REPLACE(#{search.keyword}, '-', ''), ' ', ''), '%')
+                </when>
+                <otherwise>
+                    AND (
+                        M.LOGIN_ID LIKE CONCAT('%', #{search.keyword}, '%')
+                        OR M.NICKNAME LIKE CONCAT('%', #{search.keyword}, '%')
+                        OR M.NAME LIKE CONCAT('%', #{search.keyword}, '%')
+                        OR REPLACE(REPLACE(M.PHONE, '-', ''), ' ', '')
+                            LIKE CONCAT('%', REPLACE(REPLACE(#{search.keyword}, '-', ''), ' ', ''), '%')
+                    )
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+
+    <select id="isAdminMember" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM HM_MEMBER
+            WHERE MEMBER_ID = #{memberId}
+              AND MEMBER_ROLE = 'ADMIN'
+              AND MEMBER_STATUS = 'ACTIVE'
+        )
+    </select>
+
+    <select id="countAuthTargets" resultType="long">
+        SELECT COUNT(*)
+        FROM HM_MEMBER M
+        WHERE M.MEMBER_ROLE = 'USER'
+          AND M.MEMBER_STATUS &lt;&gt; 'WITHDRAWN'
+          AND M.IDENTITY_VERIFIED_YN = 'N'
+          AND M.IDENTITY_VERIFICATION_METHOD IS NULL
+        <include refid="searchCondition"/>
+    </select>
+
+    <select id="findAuthTargets"
+            resultType="com.byeori.hobbymate.admin.vo.AdminMemberVerificationRow">
+        SELECT M.MEMBER_ID AS memberId,
+               M.LOGIN_ID AS loginId,
+               M.NICKNAME AS nickname,
+               M.NAME AS name,
+               M.BIRTH_DATE AS birthDate,
+               M.GENDER AS gender,
+               M.PHONE AS phone,
+               M.CREATED_AT AS createdAt,
+               NULL AS verificationMethod,
+               NULL AS verifiedAt,
+               NULL AS verifiedByNickname
+        FROM HM_MEMBER M
+        WHERE M.MEMBER_ROLE = 'USER'
+          AND M.MEMBER_STATUS &lt;&gt; 'WITHDRAWN'
+          AND M.IDENTITY_VERIFIED_YN = 'N'
+          AND M.IDENTITY_VERIFICATION_METHOD IS NULL
+        <include refid="searchCondition"/>
+        ORDER BY M.MEMBER_ID DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countCancelTargets" resultType="long">
+        SELECT COUNT(*)
+        FROM HM_MEMBER M
+        WHERE M.MEMBER_ROLE = 'USER'
+          AND M.MEMBER_STATUS &lt;&gt; 'WITHDRAWN'
+          AND M.IDENTITY_VERIFIED_YN = 'Y'
+          AND M.IDENTITY_VERIFICATION_METHOD = 'ADMIN_TEMP'
+        <include refid="searchCondition"/>
+    </select>
+
+    <select id="findCancelTargets"
+            resultType="com.byeori.hobbymate.admin.vo.AdminMemberVerificationRow">
+        SELECT M.MEMBER_ID AS memberId,
+               M.LOGIN_ID AS loginId,
+               M.NICKNAME AS nickname,
+               M.NAME AS name,
+               M.BIRTH_DATE AS birthDate,
+               M.GENDER AS gender,
+               M.PHONE AS phone,
+               M.CREATED_AT AS createdAt,
+               M.IDENTITY_VERIFICATION_METHOD AS verificationMethod,
+               M.IDENTITY_VERIFIED_AT AS verifiedAt,
+               A.NICKNAME AS verifiedByNickname
+        FROM HM_MEMBER M
+        LEFT JOIN HM_MEMBER A ON A.MEMBER_ID = M.IDENTITY_VERIFIED_BY
+        WHERE M.MEMBER_ROLE = 'USER'
+          AND M.MEMBER_STATUS &lt;&gt; 'WITHDRAWN'
+          AND M.IDENTITY_VERIFIED_YN = 'Y'
+          AND M.IDENTITY_VERIFICATION_METHOD = 'ADMIN_TEMP'
+        <include refid="searchCondition"/>
+        ORDER BY M.IDENTITY_VERIFIED_AT DESC, M.MEMBER_ID DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <sql id="memberStateColumns">
+        SELECT MEMBER_ID AS memberId,
+               LOGIN_ID AS loginId,
+               NICKNAME AS nickname,
+               NAME AS name,
+               BIRTH_DATE AS birthDate,
+               GENDER AS gender,
+               PHONE AS phone,
+               MEMBER_ROLE AS memberRole,
+               MEMBER_STATUS AS memberStatus,
+               IDENTITY_VERIFIED_YN AS identityVerifiedYn,
+               IDENTITY_VERIFICATION_METHOD AS verificationMethod,
+               IDENTITY_VERIFIED_AT AS verifiedAt,
+               IDENTITY_VERIFIED_BY AS verifiedBy,
+               CI_HASH AS ciHash
+        FROM HM_MEMBER
+        WHERE MEMBER_ID = #{memberId}
+    </sql>
+
+    <select id="findMemberState"
+            resultType="com.byeori.hobbymate.admin.vo.AdminMemberVerificationState">
+        <include refid="memberStateColumns"/>
+    </select>
+
+    <select id="findMemberStateForUpdate"
+            resultType="com.byeori.hobbymate.admin.vo.AdminMemberVerificationState">
+        <include refid="memberStateColumns"/>
+        FOR UPDATE
+    </select>
+
+    <update id="updateTemporaryVerification">
+        UPDATE HM_MEMBER
+        SET NAME = #{name},
+            BIRTH_DATE = #{birthDate},
+            GENDER = #{gender},
+            PHONE = #{phone},
+            IDENTITY_VERIFIED_YN = 'Y',
+            IDENTITY_VERIFICATION_METHOD = 'ADMIN_TEMP',
+            IDENTITY_VERIFIED_AT = CURRENT_TIMESTAMP,
+            IDENTITY_VERIFIED_BY = #{adminMemberId},
+            IDENTITY_VERIFICATION_REASON = #{reason},
+            CI_HASH = #{ciHash},
+            UPDATED_BY = #{adminMemberId},
+            UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE MEMBER_ID = #{memberId}
+          AND MEMBER_ROLE = 'USER'
+          AND MEMBER_STATUS &lt;&gt; 'WITHDRAWN'
+          AND IDENTITY_VERIFIED_YN = 'N'
+          AND IDENTITY_VERIFICATION_METHOD IS NULL
+    </update>
+
+    <update id="cancelTemporaryVerification">
+        UPDATE HM_MEMBER
+        SET IDENTITY_VERIFIED_YN = 'N',
+            IDENTITY_VERIFICATION_METHOD = NULL,
+            IDENTITY_VERIFIED_AT = NULL,
+            IDENTITY_VERIFIED_BY = NULL,
+            IDENTITY_VERIFICATION_REASON = NULL,
+            CI_HASH = NULL,
+            UPDATED_BY = #{adminMemberId},
+            UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE MEMBER_ID = #{memberId}
+          AND MEMBER_ROLE = 'USER'
+          AND MEMBER_STATUS &lt;&gt; 'WITHDRAWN'
+          AND IDENTITY_VERIFIED_YN = 'Y'
+          AND IDENTITY_VERIFICATION_METHOD = 'ADMIN_TEMP'
+    </update>
+
+    <insert id="insertVerificationHistory"
+            parameterType="com.byeori.hobbymate.admin.vo.AdminVerificationHistory">
+        INSERT INTO HM_ADMIN_ACTION_HISTORY (
+            ADMIN_MEMBER_ID,
+            TARGET_TYPE,
+            TARGET_ID,
+            ACTION_TYPE,
+            ACTION_REASON,
+            BEFORE_STATUS,
+            AFTER_STATUS,
+            ACTION_RESULT,
+            BEFORE_VERIFICATION_METHOD,
+            AFTER_VERIFICATION_METHOD,
+            BEFORE_CI_HASH,
+            AFTER_CI_HASH,
+            PROCESSING_TYPE,
+            OPERATION_ID
+        ) VALUES (
+            #{adminMemberId},
+            'MEMBER',
+            #{targetMemberId},
+            #{actionType},
+            #{reason},
+            #{beforeVerifiedYn},
+            #{afterVerifiedYn},
+            'SUCCESS',
+            #{beforeMethod},
+            #{afterMethod},
+            #{beforeCiHash},
+            #{afterCiHash},
+            #{processingType},
+            #{operationId}
+        )
+    </insert>
+</mapper>

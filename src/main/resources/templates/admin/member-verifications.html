@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>본인인증처리(임시) | HobbyMate</title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/admin-member-verifications.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/pages/admin-member-verifications.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="member-verification-page">
+    <div class="admin-page-heading">
+        <h1>본인인증처리(임시)</h1>
+        <p>실제 본인인증 API 연동 전 관리자 테스트를 위한 임시 기능입니다.</p>
+        <p>실제 인증 정보가 아닌 회원가입 정보를 기준으로 처리됩니다.</p>
+    </div>
+
+    <div class="admin-alert admin-alert-success"
+         th:if="${successMessage}"
+         role="status"
+         th:text="${successMessage}"></div>
+    <div class="admin-alert admin-alert-error"
+         th:if="${errorMessage}"
+         role="alert"
+         th:text="${errorMessage}"></div>
+
+    <form class="admin-search"
+          th:action="@{/admin/member-verifications}"
+          method="get">
+        <label for="searchType">검색 대상</label>
+        <select id="searchType" name="searchType">
+            <option value="ALL" th:selected="${search.searchType == 'ALL'}">통합검색</option>
+            <option value="LOGIN_ID" th:selected="${search.searchType == 'LOGIN_ID'}">아이디</option>
+            <option value="NICKNAME" th:selected="${search.searchType == 'NICKNAME'}">닉네임</option>
+            <option value="NAME" th:selected="${search.searchType == 'NAME'}">이름</option>
+            <option value="PHONE" th:selected="${search.searchType == 'PHONE'}">휴대폰 번호</option>
+        </select>
+        <label class="sr-only" for="keyword">검색어</label>
+        <input id="keyword"
+               name="keyword"
+               type="search"
+               maxlength="100"
+               th:value="${search.keyword}"
+               placeholder="검색어를 입력하세요">
+        <button class="admin-button admin-button-primary" type="submit">검색</button>
+    </form>
+
+    <section class="member-verification-section" aria-labelledby="auth-target-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="auth-target-title">임시 본인인증 처리 대상</h2>
+                <p>본인인증이 완료되지 않은 일반회원입니다.</p>
+            </div>
+        </div>
+
+        <form class="verification-batch-form"
+              data-verification-form="process"
+              th:action="@{/admin/member-verifications/temporary/batch}"
+              method="post">
+            <div class="section-toolbar">
+                <span>
+                    전체 <strong th:text="${authTargets.totalCount}">0</strong>명 /
+                    현재 <strong data-selected-count>0</strong>명 선택
+                </span>
+                <div class="batch-action">
+                    <label for="authReason">공통 인증 처리 사유</label>
+                    <input id="authReason"
+                           name="reason"
+                           type="text"
+                           maxlength="2000"
+                           required
+                           placeholder="처리 사유를 입력하세요">
+                    <button class="admin-button admin-button-primary" type="submit">
+                        선택 회원 임시 본인인증 처리
+                    </button>
+                </div>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                    <tr>
+                        <th class="checkbox-cell">
+                            <input type="checkbox"
+                                   data-select-all
+                                   aria-label="현재 페이지 처리 대상 전체 선택">
+                        </th>
+                        <th>회원번호</th>
+                        <th>아이디</th>
+                        <th>닉네임</th>
+                        <th>이름</th>
+                        <th>생년월일</th>
+                        <th>성별</th>
+                        <th>휴대폰 번호</th>
+                        <th>가입일</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="member : ${authTargets.content}">
+                        <td class="checkbox-cell">
+                            <input type="checkbox"
+                                   name="memberIds"
+                                   th:value="${member.memberId}"
+                                   data-row-checkbox
+                                   th:attr="aria-label=${member.loginId + ' 회원 선택'}">
+                        </td>
+                        <td th:text="${member.memberId}">1</td>
+                        <td th:text="${member.loginId}">user01</td>
+                        <td th:text="${member.nickname}">취미회원</td>
+                        <td th:text="${member.name}">홍길동</td>
+                        <td th:text="${member.birthDate == null ? '-' : #temporals.format(member.birthDate, 'yyyy.MM.dd')}">1990.01.01</td>
+                        <td th:text="${member.genderLabel()}">여성</td>
+                        <td th:text="${member.maskedPhone()}">010-****-1234</td>
+                        <td th:text="${member.createdAt == null ? '-' : #temporals.format(member.createdAt, 'yyyy.MM.dd')}">2026.01.01</td>
+                        <td>
+                            <a class="admin-button admin-button-small admin-button-primary"
+                               th:href="@{/admin/member-verifications/{memberId}/temporary(memberId=${member.memberId})}">
+                                임시 본인인증 처리
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(authTargets.content)}">
+                        <td class="empty-cell" colspan="10">임시 본인인증 처리 대상 회원이 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </form>
+
+        <nav class="admin-pagination" aria-label="처리 대상 페이지">
+            <span class="page-disabled" th:unless="${authTargets.hasPreviousBlock}">이전</span>
+            <a th:if="${authTargets.hasPreviousBlock}"
+               th:href="@{/admin/member-verifications(authPage=${authTargets.previousBlockPage()},cancelPage=${cancelTargets.page},searchType=${search.searchType},keyword=${search.keyword})}">
+                이전
+            </a>
+            <th:block th:each="pageNo : ${#numbers.sequence(authTargets.startPage, authTargets.endPage)}">
+                <span class="page-current"
+                      th:if="${pageNo == authTargets.page}"
+                      th:text="${pageNo}"
+                      aria-current="page">1</span>
+                <a th:unless="${pageNo == authTargets.page}"
+                   th:text="${pageNo}"
+                   th:href="@{/admin/member-verifications(authPage=${pageNo},cancelPage=${cancelTargets.page},searchType=${search.searchType},keyword=${search.keyword})}">2</a>
+            </th:block>
+            <a th:if="${authTargets.hasNextBlock}"
+               th:href="@{/admin/member-verifications(authPage=${authTargets.nextBlockPage()},cancelPage=${cancelTargets.page},searchType=${search.searchType},keyword=${search.keyword})}">
+                다음
+            </a>
+            <span class="page-disabled" th:unless="${authTargets.hasNextBlock}">다음</span>
+        </nav>
+    </section>
+
+    <section class="member-verification-section" aria-labelledby="cancel-target-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="cancel-target-title">임시 본인인증 취소 대상</h2>
+                <p>관리자가 임시로 본인인증 처리한 회원만 표시됩니다.</p>
+            </div>
+        </div>
+
+        <form class="verification-batch-form"
+              data-verification-form="cancel"
+              th:action="@{/admin/member-verifications/temporary/cancel/batch}"
+              method="post">
+            <div class="section-toolbar">
+                <span>
+                    전체 <strong th:text="${cancelTargets.totalCount}">0</strong>명 /
+                    현재 <strong data-selected-count>0</strong>명 선택
+                </span>
+                <div class="batch-action">
+                    <label for="cancelReason">공통 취소 사유</label>
+                    <input id="cancelReason"
+                           name="reason"
+                           type="text"
+                           maxlength="2000"
+                           required
+                           placeholder="취소 사유를 입력하세요">
+                    <button class="admin-button admin-button-danger" type="submit">
+                        선택 회원 임시 본인인증 취소
+                    </button>
+                </div>
+            </div>
+
+            <div class="admin-table-wrap">
+                <table class="admin-table admin-table-wide">
+                    <thead>
+                    <tr>
+                        <th class="checkbox-cell">
+                            <input type="checkbox"
+                                   data-select-all
+                                   aria-label="현재 페이지 취소 대상 전체 선택">
+                        </th>
+                        <th>회원번호</th>
+                        <th>아이디</th>
+                        <th>닉네임</th>
+                        <th>이름</th>
+                        <th>생년월일</th>
+                        <th>성별</th>
+                        <th>휴대폰 번호</th>
+                        <th>인증 방식</th>
+                        <th>인증 처리일시</th>
+                        <th>인증 처리 관리자</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="member : ${cancelTargets.content}">
+                        <td class="checkbox-cell">
+                            <input type="checkbox"
+                                   name="memberIds"
+                                   th:value="${member.memberId}"
+                                   data-row-checkbox
+                                   th:attr="aria-label=${member.loginId + ' 회원 선택'}">
+                        </td>
+                        <td th:text="${member.memberId}">1</td>
+                        <td th:text="${member.loginId}">user01</td>
+                        <td th:text="${member.nickname}">취미회원</td>
+                        <td th:text="${member.name}">홍길동</td>
+                        <td th:text="${member.birthDate == null ? '-' : #temporals.format(member.birthDate, 'yyyy.MM.dd')}">1990.01.01</td>
+                        <td th:text="${member.genderLabel()}">여성</td>
+                        <td th:text="${member.maskedPhone()}">010-****-1234</td>
+                        <td><span class="status-badge" th:text="${member.verificationMethodLabel()}">임시 본인인증</span></td>
+                        <td th:text="${member.verifiedAt == null ? '-' : #temporals.format(member.verifiedAt, 'yyyy.MM.dd HH:mm')}">2026.01.01 10:00</td>
+                        <td th:text="${#strings.isEmpty(member.verifiedByNickname) ? '-' : member.verifiedByNickname}">관리자</td>
+                        <td>
+                            <a class="admin-button admin-button-small admin-button-danger"
+                               th:href="@{/admin/member-verifications/{memberId}/temporary/cancel(memberId=${member.memberId})}">
+                                임시 본인인증 취소
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(cancelTargets.content)}">
+                        <td class="empty-cell" colspan="12">임시 본인인증 취소 대상 회원이 없습니다.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </form>
+
+        <nav class="admin-pagination" aria-label="취소 대상 페이지">
+            <span class="page-disabled" th:unless="${cancelTargets.hasPreviousBlock}">이전</span>
+            <a th:if="${cancelTargets.hasPreviousBlock}"
+               th:href="@{/admin/member-verifications(authPage=${authTargets.page},cancelPage=${cancelTargets.previousBlockPage()},searchType=${search.searchType},keyword=${search.keyword})}">
+                이전
+            </a>
+            <th:block th:each="pageNo : ${#numbers.sequence(cancelTargets.startPage, cancelTargets.endPage)}">
+                <span class="page-current"
+                      th:if="${pageNo == cancelTargets.page}"
+                      th:text="${pageNo}"
+                      aria-current="page">1</span>
+                <a th:unless="${pageNo == cancelTargets.page}"
+                   th:text="${pageNo}"
+                   th:href="@{/admin/member-verifications(authPage=${authTargets.page},cancelPage=${pageNo},searchType=${search.searchType},keyword=${search.keyword})}">2</a>
+            </th:block>
+            <a th:if="${cancelTargets.hasNextBlock}"
+               th:href="@{/admin/member-verifications(authPage=${authTargets.page},cancelPage=${cancelTargets.nextBlockPage()},searchType=${search.searchType},keyword=${search.keyword})}">
+                다음
+            </a>
+            <span class="page-disabled" th:unless="${cancelTargets.hasNextBlock}">다음</span>
+        </nav>
+    </section>
+</main>
+</body>
+</html>

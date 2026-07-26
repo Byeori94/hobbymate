@@ -43,6 +43,8 @@ erDiagram
     HM_MEMBER o|--o{ HM_REPORT : "PROCESSED_BY"
 
     HM_MEMBER ||--o{ HM_ADMIN_ACTION_HISTORY : "ADMIN_MEMBER_ID"
+    HM_MEMBER o|--o{ HM_MEMBER : "IDENTITY_VERIFIED_BY"
+    HM_MEMBER o|--o{ HM_MEMBER : "UPDATED_BY"
 
     HM_MEMBER {
         BIGINT MEMBER_ID PK
@@ -55,7 +57,10 @@ erDiagram
         DATE BIRTH_DATE
         VARCHAR GENDER
         CHAR IDENTITY_VERIFIED_YN
+        VARCHAR IDENTITY_VERIFICATION_METHOD
         DATETIME IDENTITY_VERIFIED_AT
+        BIGINT IDENTITY_VERIFIED_BY FK
+        VARCHAR IDENTITY_VERIFICATION_REASON
         VARCHAR CI_HASH UK
         VARCHAR PROFILE_IMAGE_URL
         VARCHAR MEMBER_ROLE
@@ -63,6 +68,7 @@ erDiagram
         DATETIME WITHDRAWN_AT
         DATETIME CREATED_AT
         DATETIME UPDATED_AT
+        BIGINT UPDATED_BY FK
     }
 
     HM_CATEGORY {
@@ -294,6 +300,12 @@ erDiagram
         VARCHAR AFTER_STATUS
         VARCHAR ACTION_RESULT
         VARCHAR RESULT_MESSAGE
+        VARCHAR BEFORE_VERIFICATION_METHOD
+        VARCHAR AFTER_VERIFICATION_METHOD
+        VARCHAR BEFORE_CI_HASH
+        VARCHAR AFTER_CI_HASH
+        VARCHAR PROCESSING_TYPE
+        VARCHAR OPERATION_ID
         DATETIME CREATED_AT
     }
 ```
@@ -302,6 +314,8 @@ erDiagram
 
 - `HM_MEMBER.PHONE`은 본인인증 휴대폰 번호이며 `NOT NULL`로 관리하고, 회원 탈퇴 후에도 기존 값을 보관한다.
 - `HM_MEMBER.CI_HASH`는 중복가입 확인용 식별값이며 `UNIQUE`로 관리한다.
+- 관리자 임시 본인인증은 `IDENTITY_VERIFICATION_METHOD = 'ADMIN_TEMP'`로 구분하고 임시 CI를 `TEMP-{MEMBER_ID}-{UUID}` 형식으로 서버에서 생성한다.
+- 임시 인증 취소는 `ADMIN_TEMP`에만 허용하며 인증 관련 값만 초기화하고 이름·생년월일·성별·휴대폰 번호는 유지한다.
 - 일반 회원 탈퇴 시 `CI_HASH`를 `NULL`로 변경한다. MariaDB의 UNIQUE 인덱스는 여러 개의 `NULL`을 허용하므로 탈퇴 회원이 여러 명이어도 충돌하지 않는다.
 - 탈퇴 회원의 `LOGIN_ID`는 유지하여 재사용을 허용하지 않는다.
 - 탈퇴 회원의 `NICKNAME`과 `EMAIL`은 탈퇴용 값으로 변경하여 기존 값을 다시 사용할 수 있게 한다.
@@ -315,6 +329,7 @@ erDiagram
 - 모임 내부 게시판과 만남 기능의 접근 권한은 `HM_CLUB_MEMBER`를 기준으로 서비스 계층에서 검증한다.
 - 관리자 대상 데이터의 상태 변경과 `HM_ADMIN_ACTION_HISTORY` 저장은 하나의 트랜잭션으로 처리한다.
 - `HM_ADMIN_ACTION_HISTORY`는 감사 이력이므로 일반 수정·삭제 기능을 제공하지 않는다.
+- 임시 인증 이력은 인증 전후 상태·방식·CI와 `PROCESSING_TYPE`, `OPERATION_ID`를 저장하며 CI는 화면과 일반 로그에 노출하지 않는다.
 
 ## 회원 탈퇴 처리 기준
 
@@ -359,6 +374,9 @@ erDiagram
 | `REJECT` | 거절 또는 반려 |
 | `COMPLETE` | 신고·건의 처리 완료 |
 | `UPDATE` | 기타 관리자 수정 |
+| `ADMIN_TEMP_AUTH` | 관리자 임시 본인인증 처리 |
+| `ADMIN_TEMP_AUTH_CANCEL` | 관리자 임시 본인인증 취소 |
+| `ADMIN_TEMP_AUTH_UPDATE` | 관리자 임시 본인인증 정보 수정 |
 
 ### 처리 결과
 
