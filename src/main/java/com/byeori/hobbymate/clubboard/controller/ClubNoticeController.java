@@ -4,24 +4,32 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.byeori.hobbymate.auth.security.HobbyMateUserDetails;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateRequest;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListView;
 import com.byeori.hobbymate.clubboard.service.ClubNoticeService;
 import com.byeori.hobbymate.common.exception.ClubBoardAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNotFoundException;
+import com.byeori.hobbymate.common.exception.ClubNoticeCreationException;
+
+import jakarta.validation.Valid;
 
 @Controller
 public class ClubNoticeController {
 
     private static final String LIST_VIEW = "clubboard/notice-list";
+    private static final String CREATE_VIEW = "clubboard/notice-form";
     private static final String NOT_FOUND_VIEW = "club/not-found";
 
     private final ClubNoticeService clubNoticeService;
@@ -43,12 +51,75 @@ public class ClubNoticeController {
         return LIST_VIEW;
     }
 
+    @GetMapping("/clubs/{clubId}/notices/new")
+    public String creationForm(
+            @PathVariable String clubId,
+            @AuthenticationPrincipal HobbyMateUserDetails userDetails,
+            Model model) {
+        if (!model.containsAttribute("noticeCreateRequest")) {
+            model.addAttribute("noticeCreateRequest", new ClubNoticeCreateRequest());
+        }
+        return creationView(clubId, memberId(userDetails), model);
+    }
+
+    @PostMapping("/clubs/{clubId}/notices")
+    public String create(
+            @PathVariable String clubId,
+            @AuthenticationPrincipal HobbyMateUserDetails userDetails,
+            @Valid @ModelAttribute("noticeCreateRequest") ClubNoticeCreateRequest request,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        Long memberId = memberId(userDetails);
+        if (bindingResult.hasErrors()) {
+            return creationView(clubId, memberId, model);
+        }
+
+        try {
+            clubNoticeService.createNotice(clubId, memberId, request);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "공지사항이 등록되었습니다.");
+            return "redirect:/clubs/" + clubId + "/notices";
+        } catch (ClubNoticeCreationException exception) {
+            if (exception.isAccessDenied()) {
+                redirectAttributes.addFlashAttribute(
+                        "errorMessage", exception.getMessage());
+                return "redirect:/clubs/" + exception.getClubId();
+            }
+            if (exception.getFieldName() == null) {
+                bindingResult.reject("notice.create", exception.getMessage());
+            } else {
+                bindingResult.rejectValue(
+                        exception.getFieldName(),
+                        "notice.create." + exception.getFieldName(),
+                        exception.getMessage());
+            }
+            return creationView(clubId, memberId, model);
+        }
+    }
+
+    private String creationView(String clubId, Long memberId, Model model) {
+        ClubNoticeCreateView view = clubNoticeService.prepareCreation(clubId, memberId);
+        model.addAttribute("noticeCreateView", view);
+        model.addAttribute("activeClubMenu", "NOTICE");
+        return CREATE_VIEW;
+    }
+
     @ExceptionHandler(ClubBoardAccessDeniedException.class)
     public String handleAccessDenied(
             ClubBoardAccessDeniedException exception,
             RedirectAttributes redirectAttributes) {
         redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         return "redirect:/clubs/" + exception.getClubId();
+    }
+
+    @ExceptionHandler(ClubNoticeCreationException.class)
+    public String handleCreationAccessDenied(
+            ClubNoticeCreationException exception,
+            RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        Long clubId = exception.getClubId();
+        return clubId == null ? "redirect:/" : "redirect:/clubs/" + clubId;
     }
 
     @ExceptionHandler(ClubNotFoundException.class)

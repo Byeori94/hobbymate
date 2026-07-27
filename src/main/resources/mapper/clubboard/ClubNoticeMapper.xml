@@ -18,6 +18,13 @@
           AND C.CLUB_STATUS = 'ACTIVE'
     </select>
 
+    <select id="lockClubForPostCreation" resultType="long">
+        SELECT C.CLUB_ID
+        FROM HM_CLUB C
+        WHERE C.CLUB_ID = #{clubId}
+        FOR UPDATE
+    </select>
+
     <sql id="noticeConditions">
         WHERE P.CLUB_ID = #{clubId}
           AND P.POST_TYPE = 'NOTICE'
@@ -71,7 +78,8 @@
                P.NOTICE_YN AS pinnedYn,
                P.VIEW_COUNT AS viewCount,
                P.CREATED_AT AS createdAt,
-               P.UPDATED_AT AS updatedAt
+               P.UPDATED_AT AS updatedAt,
+               NULL AS displayNumber
         FROM HM_CLUB_POST P
         LEFT JOIN HM_MEMBER M
                ON M.MEMBER_ID = P.AUTHOR_MEMBER_ID
@@ -84,5 +92,49 @@
                  P.CLUB_POST_ID DESC
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
+
+    <select id="countPinnedPosts" resultType="int">
+        SELECT COUNT(*)
+        FROM HM_CLUB_POST P
+        WHERE P.CLUB_ID = #{clubId}
+          AND P.POST_TYPE = #{postType}
+          AND P.NOTICE_YN = 'Y'
+          AND P.POST_STATUS = 'ACTIVE'
+          AND P.DELETED_AT IS NULL
+    </select>
+
+    <insert id="insertClubPost"
+            parameterType="com.byeori.hobbymate.clubboard.vo.ClubPostCreation"
+            useGeneratedKeys="true"
+            keyProperty="postId"
+            keyColumn="CLUB_POST_ID">
+        INSERT INTO HM_CLUB_POST (
+            CLUB_ID,
+            AUTHOR_MEMBER_ID,
+            MEETING_ID,
+            POST_TYPE,
+            TITLE,
+            CONTENT,
+            VIEW_COUNT,
+            NOTICE_YN,
+            POST_STATUS,
+            CREATED_AT,
+            UPDATED_AT,
+            DELETED_AT
+        ) VALUES (
+            #{clubId},
+            #{authorMemberId},
+            NULL,
+            #{postType},
+            #{title},
+            #{content},
+            0,
+            #{pinnedYn},
+            'ACTIVE',
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP,
+            NULL
+        )
+    </insert>
 
 </mapper>

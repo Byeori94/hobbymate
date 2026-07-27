@@ -535,6 +535,7 @@ erDiagram
 - `HM_REPORT.TARGET_ID`와 `HM_ADMIN_ACTION_HISTORY.TARGET_ID`는 여러 테이블의 PK를 가리키는 다형 대상이므로 물리 FK를 설정하지 않는다.
 - `HM_REPORT.TARGET_TYPE + TARGET_ID`와 `HM_ADMIN_ACTION_HISTORY.TARGET_TYPE + TARGET_ID`의 유효성은 서비스 계층에서 검증한다.
 - `HM_CLUB_POST.MEETING_ID`는 만남 모집글·후기글에서 선택적으로 사용하며 자유글에서는 `NULL`이다.
+- `HM_CLUB_POST.NOTICE_YN`은 명칭을 유지하는 공통 상단 고정 컬럼이다. 동일 모임·동일 `POST_TYPE` 안에서만 적용하며 `NOTICE`, 향후 `FREE`·`REVIEW`가 재사용한다. `MEETING`은 초기 고정 대상에서 제외하고, 게시판별 최대 5개 제한은 서비스 트랜잭션에서 검증한다.
 - `HM_CLUB_COMMENT.PARENT_COMMENT_ID`와 `HM_BOARD_COMMENT.PARENT_COMMENT_ID`는 대댓글에서만 사용한다.
 - 모임 내부 게시판과 만남 기능의 접근 권한은 `HM_CLUB_MEMBER`를 기준으로 서비스 계층에서 검증한다.
 - 관리자 대상 데이터의 상태 변경과 `HM_ADMIN_ACTION_HISTORY` 저장은 하나의 트랜잭션으로 처리한다.

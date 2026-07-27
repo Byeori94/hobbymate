@@ -39,14 +39,25 @@
                     <h1 id="notice-title">공지사항</h1>
                     <p>모임 운영과 활동에 필요한 중요한 소식을 확인해 보세요.</p>
                 </div>
-                <button class="notice-write-button"
-                        th:if="${noticeView.canWriteNotice}"
-                        type="button"
-                        data-club-nav-unavailable
-                        data-unavailable-message="공지사항 작성 기능은 준비 중입니다.">
+                <a class="notice-write-button"
+                   th:if="${noticeView.canWriteNotice}"
+                   th:href="@{/clubs/{clubId}/notices/new(clubId=${noticeView.clubId})}">
                     공지 작성
-                    <span>준비 중</span>
-                </button>
+                </a>
+            </div>
+
+            <div class="notice-flash notice-flash--success"
+                 th:if="${successMessage}"
+                 role="status"
+                 th:text="${successMessage}">
+                공지사항이 등록되었습니다.
+            </div>
+
+            <div class="notice-flash notice-flash--error"
+                 th:if="${errorMessage}"
+                 role="alert"
+                 th:text="${errorMessage}">
+                요청을 처리하지 못했습니다.
             </div>
 
             <div class="notice-validation-message"
@@ -124,7 +135,7 @@
                         th:classappend="${notice.pinned} ? ' is-pinned'">
                         <td class="notice-number" data-label="번호">
                             <span class="notice-pin-badge"
-                                  th:if="${notice.pinned}">중요</span>
+                                  th:if="${notice.pinned}">공지</span>
                             <span th:unless="${notice.pinned}"
                                   th:text="${notice.displayNumber}">1</span>
                         </td>

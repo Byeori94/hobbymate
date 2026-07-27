@@ -122,6 +122,26 @@ body {
     background: #fff7f7;
 }
 
+.notice-flash {
+    margin-top: 22px;
+    padding: 13px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.notice-flash--success {
+    border: 1px solid #b9e8c5;
+    color: var(--notice-primary-deep);
+    background: var(--notice-primary-soft);
+}
+
+.notice-flash--error {
+    border: 1px solid #f0c6c6;
+    color: #a12626;
+    background: #fff7f7;
+}
+
 .notice-validation-message p {
     margin: 0;
 }

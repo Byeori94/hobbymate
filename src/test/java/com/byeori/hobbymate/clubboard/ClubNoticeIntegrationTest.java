@@ -2,9 +2,13 @@ package com.byeori.hobbymate.clubboard;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
@@ -26,12 +30,14 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.byeori.hobbymate.auth.security.HobbyMateUserDetails;
 import com.byeori.hobbymate.club.dto.ClubPage;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeSearchCondition;
 import com.byeori.hobbymate.clubboard.service.ClubNoticeService;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeListItem;
 import com.byeori.hobbymate.common.exception.ClubBoardAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNotFoundException;
+import com.byeori.hobbymate.common.exception.ClubNoticeCreationException;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -49,6 +55,8 @@ class ClubNoticeIntegrationTest {
                 .thenReturn(viewData("MEMBER", false, false));
         when(clubNoticeService.getNotices(eq("1"), eq(8L), any()))
                 .thenReturn(viewData("LEADER", true, true));
+        when(clubNoticeService.prepareCreation("1", 8L))
+                .thenReturn(new ClubNoticeCreateView(1L, "주말 독서 모임", true, true));
     }
 
     @Test
@@ -64,7 +72,7 @@ class ClubNoticeIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("clubboard/notice-list"))
                 .andExpect(content().string(Matchers.containsString("공지사항")))
-                .andExpect(content().string(Matchers.containsString("중요")))
+                .andExpect(content().string(Matchers.containsString("고정")))
                 .andExpect(content().string(Matchers.containsString("운영 안내")))
                 .andExpect(content().string(Matchers.containsString(
                         "href=\"/clubs/1/notices\"")))
@@ -77,14 +85,100 @@ class ClubNoticeIntegrationTest {
     }
 
     @Test
-    void leaderSeesPreparedWriteButtonAndManagementMenu() throws Exception {
+    void leaderSeesActualWriteLinkAndManagementMenu() throws Exception {
         mockMvc.perform(get("/clubs/1/notices").with(user(userDetails(8L))))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("공지 작성")))
-                .andExpect(content().string(Matchers.containsString("준비 중")))
                 .andExpect(content().string(Matchers.containsString("모임관리")))
-                .andExpect(content().string(Matchers.not(
-                        Matchers.containsString("/notices/new"))));
+                .andExpect(content().string(Matchers.containsString(
+                        "href=\"/clubs/1/notices/new\"")));
+    }
+
+    @Test
+    void leaderCanOpenCreationFormWithNoticeMenuActive() throws Exception {
+        mockMvc.perform(get("/clubs/1/notices/new").with(user(userDetails(8L))))
+                .andExpect(status().isOk())
+                .andExpect(view().name("clubboard/notice-form"))
+                .andExpect(content().string(Matchers.containsString("공지사항 작성")))
+                .andExpect(content().string(Matchers.containsString("상단 고정")))
+                .andExpect(content().string(Matchers.containsString(
+                        "action=\"/clubs/1/notices\"")))
+                .andExpect(content().string(Matchers.containsString(
+                        "aria-current=\"page\"")));
+    }
+
+    @Test
+    void ordinaryMemberCannotOpenCreationForm() throws Exception {
+        when(clubNoticeService.prepareCreation("1", 7L))
+                .thenThrow(ClubNoticeCreationException.accessDenied(1L));
+
+        mockMvc.perform(get("/clubs/1/notices/new").with(user(userDetails(7L))))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clubs/1"))
+                .andExpect(flash().attribute(
+                        "errorMessage",
+                        "모임장과 운영진만 공지사항을 작성할 수 있습니다."));
+    }
+
+    @Test
+    void postRequiresCsrf() throws Exception {
+        mockMvc.perform(post("/clubs/1/notices")
+                        .param("title", "정상 공지 제목")
+                        .param("content", "열 자 이상인 정상 공지 내용입니다.")
+                        .with(user(userDetails(8L))))
+                .andExpect(status().isForbidden());
+        verify(clubNoticeService, never()).createNotice(any(), any(), any());
+    }
+
+    @Test
+    void validPostRedirectsWithFlashMessage() throws Exception {
+        when(clubNoticeService.createNotice(eq("1"), eq(8L), any()))
+                .thenReturn(101L);
+
+        mockMvc.perform(post("/clubs/1/notices")
+                        .param("title", "정상 공지 제목")
+                        .param("content", "열 자 이상인 정상 공지 내용입니다.")
+                        .param("pinnedYn", "Y")
+                        .with(user(userDetails(8L)))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clubs/1/notices"))
+                .andExpect(flash().attribute(
+                        "successMessage", "공지사항이 등록되었습니다."));
+        verify(clubNoticeService).createNotice(eq("1"), eq(8L), any());
+    }
+
+    @Test
+    void validationErrorPreservesFormAndDoesNotCreatePost() throws Exception {
+        mockMvc.perform(post("/clubs/1/notices")
+                        .param("title", " ")
+                        .param("content", "짧음")
+                        .param("pinnedYn", "Y")
+                        .with(user(userDetails(8L)))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("clubboard/notice-form"))
+                .andExpect(content().string(Matchers.containsString("제목을 입력해 주세요.")))
+                .andExpect(content().string(Matchers.containsString(
+                        "내용은 10자 이상 10,000자 이하로 입력해 주세요.")))
+                .andExpect(content().string(Matchers.containsString(
+                        "id=\"pinnedYn\"")))
+                .andExpect(content().string(Matchers.containsString("checked")));
+        verify(clubNoticeService, never()).createNotice(any(), any(), any());
+    }
+
+    @Test
+    void manipulatedPinnedValueIsRejectedBeforeService() throws Exception {
+        mockMvc.perform(post("/clubs/1/notices")
+                        .param("title", "정상 공지 제목")
+                        .param("content", "열 자 이상인 정상 공지 내용입니다.")
+                        .param("pinnedYn", "DROP")
+                        .with(user(userDetails(8L)))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString(
+                        "상단 고정 값이 올바르지 않습니다.")));
+        verify(clubNoticeService, never()).createNotice(any(), any(), any());
     }
 
     @Test
