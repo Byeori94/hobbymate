@@ -284,6 +284,19 @@ select:focus {
     object-fit: cover;
 }
 
+.club-image-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.club-image-link:focus-visible,
+.club-card h3 a:focus-visible,
+.detail-link:focus-visible {
+    outline: 3px solid rgb(52 199 89 / 28%);
+    outline-offset: -3px;
+}
+
 .club-card-image img.club-default-image {
     padding: 34px;
     background: #eff9f2;
@@ -333,6 +346,15 @@ select:focus {
     letter-spacing: -0.025em;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.club-card h3 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.club-card h3 a:hover {
+    color: var(--club-primary-deep);
 }
 
 .club-summary {
@@ -396,14 +418,21 @@ select:focus {
     color: #4b5660;
 }
 
-.detail-notice {
+.detail-link {
+    display: block;
     margin: 14px 0 0;
     padding-top: 14px;
     border-top: 1px solid #edf0f2;
-    color: #89939b;
-    font-size: 12px;
-    font-weight: 650;
+    color: var(--club-primary-deep);
+    font-size: 13px;
+    font-weight: 750;
     text-align: center;
+    text-decoration: none;
+}
+
+.detail-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 .empty-result {

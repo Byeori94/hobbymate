@@ -49,7 +49,9 @@ class ClubListIntegrationTest {
                 .andExpect(content().string(Matchers.containsString("모임 둘러보기")))
                 .andExpect(content().string(Matchers.containsString("주말 독서 모임")))
                 .andExpect(content().string(Matchers.containsString("3")))
-                .andExpect(content().string(Matchers.containsString("20")));
+                .andExpect(content().string(Matchers.containsString("20")))
+                .andExpect(content().string(Matchers.containsString("href=\"/clubs/1\"")))
+                .andExpect(content().string(Matchers.containsString("모임 상세 보기")));
     }
 
     @Test
@@ -63,7 +65,9 @@ class ClubListIntegrationTest {
                 .andExpect(content().string(Matchers.containsString(
                         "src=\"/hobbymate/js/pages/club-list.js\"")))
                 .andExpect(content().string(Matchers.containsString(
-                        "src=\"/hobbymate/images/logo/hobbymate_logo_transparent.png\"")));
+                        "src=\"/hobbymate/images/logo/hobbymate_logo_transparent.png\"")))
+                .andExpect(content().string(Matchers.containsString(
+                        "href=\"/hobbymate/clubs/1\"")));
     }
 
     @Test

@@ -167,6 +167,94 @@
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
+    <select id="findPublicClubDetail"
+            resultType="com.byeori.hobbymate.club.vo.ClubDetail">
+        SELECT C.CLUB_ID AS clubId,
+               C.REPRESENTATIVE_IMAGE_URL AS representativeImageUrl,
+               C.CLUB_NAME AS clubName,
+               CAT.CATEGORY_NAME AS categoryName,
+               C.ACTIVITY_REGION AS activityRegion,
+               C.CLUB_SUMMARY AS clubSummary,
+               C.CLUB_DESCRIPTION AS clubDescription,
+               C.GENDER_POLICY AS genderPolicy,
+               C.MIN_AGE AS minAge,
+               C.MAX_AGE AS maxAge,
+               COALESCE(ACTIVE_MEMBERS.MEMBER_COUNT, 0) AS memberCount,
+               C.MAX_MEMBER_COUNT AS maxMemberCount,
+               C.RECRUIT_STATUS AS recruitStatus,
+               C.JOIN_TYPE AS joinType,
+               C.JOIN_GUIDE AS joinGuide,
+               LEADER.MEMBER_ID AS leaderMemberId,
+               LEADER.NICKNAME AS leaderNickname,
+               LEADER.PROFILE_IMAGE_URL AS leaderProfileImageUrl,
+               C.CREATED_AT AS createdAt,
+               C.UPDATED_AT AS updatedAt,
+               C.LAST_ACTIVITY_AT AS lastActivityAt
+        FROM HM_CLUB C
+        INNER JOIN HM_CATEGORY CAT
+                ON CAT.CATEGORY_ID = C.CATEGORY_ID
+        INNER JOIN (
+            SELECT CLUB_ID,
+                   MIN(MEMBER_ID) AS LEADER_MEMBER_ID
+            FROM HM_CLUB_MEMBER
+            WHERE CLUB_ROLE = 'LEADER'
+              AND MEMBER_STATUS = 'ACTIVE'
+            GROUP BY CLUB_ID
+        ) CLUB_LEADER
+                ON CLUB_LEADER.CLUB_ID = C.CLUB_ID
+        INNER JOIN HM_MEMBER LEADER
+                ON LEADER.MEMBER_ID = CLUB_LEADER.LEADER_MEMBER_ID
+        LEFT JOIN (
+            SELECT CLUB_ID,
+                   COUNT(*) AS MEMBER_COUNT
+            FROM HM_CLUB_MEMBER
+            WHERE MEMBER_STATUS = 'ACTIVE'
+            GROUP BY CLUB_ID
+        ) ACTIVE_MEMBERS
+               ON ACTIVE_MEMBERS.CLUB_ID = C.CLUB_ID
+        WHERE C.CLUB_ID = #{clubId}
+          AND C.CLUB_STATUS = 'ACTIVE'
+    </select>
+
+    <select id="findClubMemberRelation"
+            resultType="com.byeori.hobbymate.club.vo.ClubMemberRelation">
+        SELECT (
+                   SELECT CM.CLUB_ROLE
+                   FROM HM_CLUB_MEMBER CM
+                   WHERE CM.CLUB_ID = #{clubId}
+                     AND CM.MEMBER_ID = #{memberId}
+                   LIMIT 1
+               ) AS memberRole,
+               (
+                   SELECT CM.MEMBER_STATUS
+                   FROM HM_CLUB_MEMBER CM
+                   WHERE CM.CLUB_ID = #{clubId}
+                     AND CM.MEMBER_ID = #{memberId}
+                   LIMIT 1
+               ) AS memberStatus,
+               CASE WHEN EXISTS (
+                   SELECT 1
+                   FROM HM_CLUB_JOIN_REQUEST JR
+                   WHERE JR.CLUB_ID = #{clubId}
+                     AND JR.MEMBER_ID = #{memberId}
+                     AND JR.REQUEST_STATUS = 'WAITING'
+               ) THEN 'Y' ELSE 'N' END AS pendingJoinYn,
+               CASE WHEN EXISTS (
+                   SELECT 1
+                   FROM HM_CLUB_BAN CB
+                   WHERE CB.CLUB_ID = #{clubId}
+                     AND CB.MEMBER_ID = #{memberId}
+                     AND CB.ACTIVE_YN = 'Y'
+               ) THEN 'Y' ELSE 'N' END AS permanentBanYn,
+               (
+                   SELECT MAX(CH.REJOIN_AVAILABLE_AT)
+                   FROM HM_CLUB_MEMBER_HISTORY CH
+                   WHERE CH.CLUB_ID = #{clubId}
+                     AND CH.MEMBER_ID = #{memberId}
+                     AND CH.EVENT_TYPE IN ('LEFT', 'KICKED')
+               ) AS rejoinAvailableAt
+    </select>
+
     <insert id="insertClub"
             parameterType="com.byeori.hobbymate.club.vo.ClubCreation"
             useGeneratedKeys="true"

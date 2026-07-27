@@ -1,0 +1,550 @@
+:root {
+    --detail-primary: #34c759;
+    --detail-primary-dark: #229a43;
+    --detail-primary-deep: #167a38;
+    --detail-primary-soft: #e8f9ed;
+    --detail-bg: #f2f4f5;
+    --detail-surface: #fff;
+    --detail-text: #33383f;
+    --detail-muted: #68727d;
+    --detail-border: #dce2e7;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    color: var(--detail-text);
+    background: var(--detail-bg);
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.club-detail-page {
+    width: min(100% - 48px, 1160px);
+    margin: 0 auto;
+    padding: 36px 0 100px;
+}
+
+.detail-breadcrumb {
+    margin-bottom: 18px;
+}
+
+.detail-breadcrumb a,
+.back-to-list-button {
+    color: var(--detail-primary-deep);
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.detail-breadcrumb a:hover,
+.back-to-list-button:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.detail-breadcrumb a:focus-visible,
+.back-to-list-button:focus-visible,
+.detail-action-button:focus-visible {
+    outline: 3px solid rgb(52 199 89 / 24%);
+    outline-offset: 3px;
+}
+
+.club-detail {
+    overflow: hidden;
+    border: 1px solid var(--detail-border);
+    border-radius: 22px;
+    background: var(--detail-surface);
+    box-shadow: 0 12px 32px rgb(51 56 63 / 6%);
+}
+
+.club-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(380px, 0.88fr);
+    border-bottom: 1px solid var(--detail-border);
+}
+
+.club-hero-image {
+    display: grid;
+    min-height: 430px;
+    overflow: hidden;
+    place-items: center;
+    background: #eef8f1;
+}
+
+.club-hero-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.club-hero-image img.club-default-image {
+    width: min(56%, 310px);
+    height: auto;
+    padding: 28px;
+    object-fit: contain;
+}
+
+.club-hero-content {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    padding: 48px 44px;
+}
+
+.club-heading-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.category-badge,
+.recruit-badge,
+.relationship-badge,
+.leader-badge {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.category-badge {
+    padding: 7px 11px;
+    color: var(--detail-primary-deep);
+    background: var(--detail-primary-soft);
+}
+
+.recruit-badge {
+    padding: 6px 10px;
+    border: 1px solid #bfe8ca;
+    color: var(--detail-primary-deep);
+    background: #fff;
+}
+
+.recruit-badge.status-full {
+    border-color: #efd9a9;
+    color: #815b18;
+    background: #fff9ed;
+}
+
+.recruit-badge.status-closed {
+    border-color: #d5dbe0;
+    color: #65707a;
+    background: #f5f6f7;
+}
+
+.club-hero-content h1 {
+    margin: 0;
+    font-size: clamp(32px, 4vw, 46px);
+    line-height: 1.18;
+    letter-spacing: -0.045em;
+    overflow-wrap: anywhere;
+}
+
+.club-summary {
+    margin: 18px 0 30px;
+    color: var(--detail-muted);
+    font-size: 17px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.club-overview {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.club-overview li {
+    min-width: 0;
+    padding: 13px 14px;
+    border-radius: 10px;
+    background: #f7f9f8;
+}
+
+.club-overview li > span,
+.club-overview li > strong {
+    display: block;
+}
+
+.club-overview li > span {
+    margin-bottom: 5px;
+    color: #7a858e;
+    font-size: 12px;
+}
+
+.club-overview li > strong {
+    overflow-wrap: anywhere;
+    font-size: 14px;
+}
+
+.club-detail-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+    gap: 34px;
+    padding: 44px;
+}
+
+.club-detail-main {
+    min-width: 0;
+}
+
+.detail-section + .detail-section {
+    margin-top: 42px;
+    padding-top: 42px;
+    border-top: 1px solid #edf0f2;
+}
+
+.section-heading > p {
+    margin: 0 0 7px;
+    color: var(--detail-primary-dark);
+    font-size: 11px;
+    font-weight: 850;
+    letter-spacing: 0.12em;
+}
+
+.section-heading h2 {
+    margin: 0;
+    font-size: 25px;
+    letter-spacing: -0.03em;
+}
+
+.club-description {
+    margin: 22px 0 0;
+    color: #4d5760;
+    font-size: 16px;
+    line-height: 1.85;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.condition-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 22px 0 0;
+}
+
+.condition-grid > div {
+    min-width: 0;
+    padding: 17px;
+    border: 1px solid #e4e8eb;
+    border-radius: 12px;
+    background: #fbfcfc;
+}
+
+.condition-grid dt,
+.condition-grid dd {
+    margin: 0;
+}
+
+.condition-grid dt {
+    margin-bottom: 7px;
+    color: #7a858e;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.condition-grid dd {
+    font-size: 15px;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+
+.condition-grid dd strong,
+.condition-grid dd span {
+    display: block;
+}
+
+.condition-grid dd span {
+    margin-top: 6px;
+    color: var(--detail-muted);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.55;
+}
+
+.join-guide {
+    margin-top: 18px;
+    padding: 19px;
+    border-left: 4px solid var(--detail-primary);
+    border-radius: 0 10px 10px 0;
+    background: var(--detail-primary-soft);
+}
+
+.join-guide h3 {
+    margin: 0 0 8px;
+    font-size: 15px;
+}
+
+.join-guide p {
+    margin: 0;
+    color: #4d6454;
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.leader-profile {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: 22px;
+    padding: 20px;
+    border: 1px solid #e4e8eb;
+    border-radius: 14px;
+    background: #fbfcfc;
+}
+
+.leader-profile img {
+    flex: 0 0 auto;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 3px 12px rgb(51 56 63 / 15%);
+}
+
+.leader-badge {
+    margin-bottom: 6px;
+    padding: 4px 8px;
+    color: var(--detail-primary-deep);
+    background: var(--detail-primary-soft);
+}
+
+.leader-profile strong,
+.leader-profile p {
+    display: block;
+}
+
+.leader-profile strong {
+    font-size: 18px;
+}
+
+.leader-profile p {
+    margin: 5px 0 0;
+    color: var(--detail-muted);
+    font-size: 13px;
+}
+
+.club-action-card {
+    position: sticky;
+    top: 24px;
+    padding: 24px;
+    border: 1px solid #cfe8d5;
+    border-radius: 16px;
+    background: #f7fcf8;
+}
+
+.relationship-badge {
+    margin-bottom: 12px;
+    padding: 5px 9px;
+    color: var(--detail-primary-deep);
+    background: #dff6e5;
+}
+
+.club-action-card h2 {
+    margin: 0;
+    font-size: 21px;
+    letter-spacing: -0.025em;
+}
+
+.club-action-card > div > p {
+    margin: 10px 0 0;
+    color: var(--detail-muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.detail-action-button {
+    display: flex;
+    width: 100%;
+    min-height: 50px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 22px;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: var(--detail-primary);
+    font: inherit;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.detail-action-button:hover {
+    background: var(--detail-primary-dark);
+}
+
+.detail-action-button.is-disabled {
+    color: #69747d;
+    background: #e4e8eb;
+    cursor: not-allowed;
+}
+
+.club-action-card > small {
+    display: block;
+    margin-top: 10px;
+    color: #78838c;
+    font-size: 11px;
+    line-height: 1.55;
+    text-align: center;
+}
+
+.action-summary {
+    display: grid;
+    gap: 10px;
+    margin: 22px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid #dcebe0;
+}
+
+.action-summary > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.action-summary dt,
+.action-summary dd {
+    margin: 0;
+    font-size: 13px;
+}
+
+.action-summary dt {
+    color: #748078;
+}
+
+.action-summary dd {
+    font-weight: 750;
+    text-align: right;
+}
+
+.detail-bottom-action {
+    display: flex;
+    justify-content: center;
+    margin-top: 28px;
+}
+
+.back-to-list-button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border: 1px solid #b7d9c0;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.error-page {
+    display: grid;
+    min-height: 60vh;
+    place-items: center;
+}
+
+.not-found-card {
+    width: min(100%, 620px);
+    padding: 64px 32px;
+    border: 1px solid var(--detail-border);
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgb(51 56 63 / 6%);
+    text-align: center;
+}
+
+.not-found-mark {
+    display: grid;
+    width: 62px;
+    height: 62px;
+    margin: 0 auto;
+    place-items: center;
+    border-radius: 18px;
+    color: #fff;
+    background: var(--detail-primary);
+    font-weight: 850;
+}
+
+.not-found-card h1 {
+    margin: 24px 0 10px;
+    font-size: 28px;
+}
+
+.not-found-card p {
+    margin: 0 0 28px;
+    color: var(--detail-muted);
+}
+
+@media (max-width: 940px) {
+    .club-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .club-hero-image {
+        min-height: auto;
+        aspect-ratio: 16 / 9;
+    }
+
+    .club-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .club-action-card {
+        position: static;
+        grid-row: 1;
+    }
+}
+
+@media (max-width: 640px) {
+    .club-detail-page {
+        width: min(100% - 28px, 1160px);
+        padding: 26px 0 72px;
+    }
+
+    .club-detail {
+        border-radius: 16px;
+    }
+
+    .club-hero-content,
+    .club-detail-layout {
+        padding: 26px 20px;
+    }
+
+    .club-hero-content h1 {
+        font-size: 31px;
+    }
+
+    .club-summary {
+        font-size: 15px;
+    }
+
+    .club-overview,
+    .condition-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-section + .detail-section {
+        margin-top: 34px;
+        padding-top: 34px;
+    }
+
+    .leader-profile {
+        align-items: flex-start;
+    }
+
+    .not-found-card {
+        padding: 48px 20px;
+    }
+}

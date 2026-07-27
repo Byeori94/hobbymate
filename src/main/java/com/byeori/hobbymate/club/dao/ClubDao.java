@@ -9,8 +9,10 @@ import com.byeori.hobbymate.club.dto.ClubSearchCondition;
 import com.byeori.hobbymate.club.vo.ClubCategory;
 import com.byeori.hobbymate.club.vo.ClubCreation;
 import com.byeori.hobbymate.club.vo.ClubCreationMember;
+import com.byeori.hobbymate.club.vo.ClubDetail;
 import com.byeori.hobbymate.club.vo.ClubLeaderRegistration;
 import com.byeori.hobbymate.club.vo.ClubListItem;
+import com.byeori.hobbymate.club.vo.ClubMemberRelation;
 
 @Mapper
 public interface ClubDao {
@@ -28,6 +30,12 @@ public interface ClubDao {
     long countPublicClubs(ClubSearchCondition search);
 
     List<ClubListItem> findPublicClubs(ClubSearchCondition search);
+
+    ClubDetail findPublicClubDetail(@Param("clubId") Long clubId);
+
+    ClubMemberRelation findClubMemberRelation(
+            @Param("clubId") Long clubId,
+            @Param("memberId") Long memberId);
 
     int insertClub(ClubCreation club);
 

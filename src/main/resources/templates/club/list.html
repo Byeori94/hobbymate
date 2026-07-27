@@ -170,15 +170,19 @@
         <div class="club-card-grid" th:unless="${#lists.isEmpty(clubs.content)}">
             <article class="club-card" th:each="club : ${clubs.content}">
                 <div class="club-card-image">
-                    <img th:if="${club.hasRepresentativeImage()}"
-                         data-club-image-fallback
-                         th:src="@{/club-images/{fileName}(fileName=${club.representativeImageUrl})}"
-                         th:attr="data-default-src=@{/images/logo/hobbymate_logo_transparent.png}"
-                         th:alt="${club.clubName + ' 대표 이미지'}">
-                    <img class="club-default-image"
-                         th:unless="${club.hasRepresentativeImage()}"
-                         th:src="@{/images/logo/hobbymate_logo_transparent.png}"
-                         th:alt="${club.clubName + ' 기본 대표 이미지'}">
+                    <a class="club-image-link"
+                       th:href="@{/clubs/{clubId}(clubId=${club.clubId})}"
+                       th:attr="aria-label=${club.clubName + ' 상세 보기'}">
+                        <img th:if="${club.hasRepresentativeImage()}"
+                             data-club-image-fallback
+                             th:src="@{/club-images/{fileName}(fileName=${club.representativeImageUrl})}"
+                             th:attr="data-default-src=@{/images/logo/hobbymate_logo_transparent.png}"
+                             th:alt="${club.clubName + ' 대표 이미지'}">
+                        <img class="club-default-image"
+                             th:unless="${club.hasRepresentativeImage()}"
+                             th:src="@{/images/logo/hobbymate_logo_transparent.png}"
+                             th:alt="${club.clubName + ' 기본 대표 이미지'}">
+                    </a>
                     <span class="recruit-badge"
                           th:classappend="${' status-' + #strings.toLowerCase(club.recruitStatus)}"
                           th:text="${club.recruitStatusLabel()}">모집 중</span>
@@ -186,7 +190,12 @@
 
                 <div class="club-card-body">
                     <p class="club-category" th:text="${club.categoryName}">독서</p>
-                    <h3 th:text="${club.clubName}">주말 독서 모임</h3>
+                    <h3>
+                        <a th:href="@{/clubs/{clubId}(clubId=${club.clubId})}"
+                           th:text="${club.clubName}">
+                            주말 독서 모임
+                        </a>
+                    </h3>
                     <p class="club-summary"
                        th:text="${#strings.isEmpty(club.clubSummary) ? '소개가 등록되지 않았습니다.' : club.clubSummary}">
                         함께 책을 읽고 이야기를 나눠요.
@@ -234,7 +243,10 @@
                             <span th:unless="${club.lastActivityAt != null}">-</span>
                         </p>
                     </div>
-                    <p class="detail-notice">상세 보기 준비 중</p>
+                    <a class="detail-link"
+                       th:href="@{/clubs/{clubId}(clubId=${club.clubId})}">
+                        모임 상세 보기
+                    </a>
                 </div>
             </article>
         </div>

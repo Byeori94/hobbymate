@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" th:content="${detail.club.clubName + ' 모임 상세 정보'}">
+    <title th:text="${detail.club.clubName + ' | HobbyMate'}">모임 상세 | HobbyMate</title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/common/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/club-detail.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/pages/club-detail.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="club-detail-page">
+    <nav class="detail-breadcrumb" aria-label="모임 탐색 경로">
+        <a th:href="@{/clubs}">← 모임 목록으로</a>
+    </nav>
+
+    <article class="club-detail">
+        <section class="club-hero" aria-labelledby="club-detail-title">
+            <div class="club-hero-image">
+                <img th:if="${detail.club.hasRepresentativeImage()}"
+                     data-club-image-fallback
+                     th:src="@{/club-images/{fileName}(fileName=${detail.club.representativeImageUrl})}"
+                     th:attr="data-default-src=@{/images/logo/hobbymate_logo_transparent.png}"
+                     th:alt="${detail.club.clubName + ' 대표 이미지'}">
+                <img class="club-default-image"
+                     th:unless="${detail.club.hasRepresentativeImage()}"
+                     th:src="@{/images/logo/hobbymate_logo_transparent.png}"
+                     th:alt="${detail.club.clubName + ' 기본 대표 이미지'}">
+            </div>
+
+            <div class="club-hero-content">
+                <div class="club-heading-badges">
+                    <span class="category-badge"
+                          th:text="${detail.club.categoryDisplayName()}">독서</span>
+                    <span class="recruit-badge"
+                          th:classappend="${' status-' + #strings.toLowerCase(detail.club.recruitStatus)}"
+                          th:text="${detail.club.recruitStatusLabel()}">모집 중</span>
+                </div>
+
+                <h1 id="club-detail-title" th:text="${detail.club.clubName}">주말 독서 모임</h1>
+                <p class="club-summary"
+                   th:text="${#strings.isEmpty(detail.club.clubSummary)
+                       ? '함께 취미를 즐길 회원을 기다리고 있어요.'
+                       : detail.club.clubSummary}">
+                    함께 책을 읽고 이야기해요.
+                </p>
+
+                <ul class="club-overview" aria-label="모임 핵심 정보">
+                    <li>
+                        <span>활동 지역</span>
+                        <strong th:text="${detail.club.regionDisplayName()}">서울 마포구</strong>
+                    </li>
+                    <li>
+                        <span>현재 인원</span>
+                        <strong>
+                            <span th:text="${detail.club.memberCount}">1</span>
+                            /
+                            <span th:text="${detail.club.maxMemberCount}">20</span>명
+                        </strong>
+                    </li>
+                    <li>
+                        <span>가입 방식</span>
+                        <strong th:text="${detail.club.joinTypeLabel()}">승인 후 가입</strong>
+                    </li>
+                    <li>
+                        <span>최근 활동</span>
+                        <strong>
+                            <time th:if="${detail.club.displayActivityAt() != null}"
+                                  th:datetime="${detail.club.displayActivityAt()}"
+                                  th:text="${#temporals.format(detail.club.displayActivityAt(), 'yyyy.MM.dd')}">
+                                2026.07.27
+                            </time>
+                            <span th:unless="${detail.club.displayActivityAt() != null}">-</span>
+                        </strong>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <div class="club-detail-layout">
+            <div class="club-detail-main">
+                <section class="detail-section" aria-labelledby="club-description-title">
+                    <div class="section-heading">
+                        <p>ABOUT CLUB</p>
+                        <h2 id="club-description-title">모임 소개</h2>
+                    </div>
+                    <p class="club-description"
+                       th:text="${#strings.isEmpty(detail.club.clubDescription)
+                           ? '등록된 모임 소개가 없습니다.'
+                           : detail.club.clubDescription}">
+                        모임 소개가 표시됩니다.
+                    </p>
+                </section>
+
+                <section class="detail-section" aria-labelledby="join-condition-title">
+                    <div class="section-heading">
+                        <p>JOIN CONDITION</p>
+                        <h2 id="join-condition-title">가입 조건</h2>
+                    </div>
+
+                    <dl class="condition-grid">
+                        <div>
+                            <dt>성별 조건</dt>
+                            <dd th:text="${detail.club.genderLabel()}">성별 제한 없음</dd>
+                        </div>
+                        <div>
+                            <dt>연령 조건</dt>
+                            <dd th:text="${detail.club.ageLabel()}">만 20세~만 60세</dd>
+                        </div>
+                        <div>
+                            <dt>모집 상태</dt>
+                            <dd th:text="${detail.club.recruitStatusLabel()}">모집 중</dd>
+                        </div>
+                        <div>
+                            <dt>가입 방식</dt>
+                            <dd>
+                                <strong th:text="${detail.club.joinTypeLabel()}">승인 후 가입</strong>
+                                <span th:text="${detail.club.joinTypeDescription()}">
+                                    가입 신청 후 승인이 필요합니다.
+                                </span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>현재 인원</dt>
+                            <dd th:text="${detail.club.memberCount + '명'}">1명</dd>
+                        </div>
+                        <div>
+                            <dt>최대 정원</dt>
+                            <dd th:text="${detail.club.maxMemberCount + '명'}">20명</dd>
+                        </div>
+                    </dl>
+
+                    <div class="join-guide"
+                         th:if="${detail.club.joinType == 'APPROVAL' and detail.club.hasJoinGuide()}">
+                        <h3>가입 신청 안내</h3>
+                        <p th:text="${detail.club.joinGuide}">가입 신청 시 자기소개를 남겨주세요.</p>
+                    </div>
+                </section>
+
+                <section class="detail-section leader-section" aria-labelledby="club-leader-title">
+                    <div class="section-heading">
+                        <p>CLUB LEADER</p>
+                        <h2 id="club-leader-title">모임장</h2>
+                    </div>
+                    <div class="leader-profile">
+                        <img data-profile-image-fallback
+                             th:src="${detail.club.hasLeaderProfileImage()}
+                                 ? @{/profile-images/{fileName}(fileName=${detail.club.leaderProfileImageUrl})}
+                                 : @{/images/common/default-profile.png}"
+                             th:attr="data-default-src=@{/images/common/default-profile.png}"
+                             th:alt="${detail.club.leaderDisplayName() + '님의 프로필 이미지'}"
+                             width="72"
+                             height="72">
+                        <div>
+                            <span class="leader-badge">모임장</span>
+                            <strong th:text="${detail.club.leaderDisplayName() + '님'}">벼리님</strong>
+                            <p>모임 운영과 가입 승인을 담당합니다.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="club-action-card" aria-labelledby="club-action-title">
+                <div>
+                    <span class="relationship-badge"
+                          th:if="${!#strings.isEmpty(detail.relationshipLabel)}"
+                          th:text="${detail.relationshipLabel}">가입 회원</span>
+                    <h2 id="club-action-title"
+                        th:text="${detail.isAnonymous() ? '이 모임과 함께하고 싶나요?' : '내 모임 상태'}">
+                        내 모임 상태
+                    </h2>
+                    <p th:text="${detail.actionMessage}">가입 기능은 준비 중입니다.</p>
+                </div>
+
+                <a class="detail-action-button"
+                   th:if="${detail.isAnonymous()}"
+                   th:href="@{/auth/login}"
+                   th:text="${detail.actionLabel}">
+                    로그인
+                </a>
+                <button class="detail-action-button is-disabled"
+                        th:unless="${detail.isAnonymous()}"
+                        type="button"
+                        disabled
+                        th:text="${detail.actionLabel}">
+                    가입 신청
+                </button>
+                <small th:if="${!detail.isAnonymous() and detail.isNonMember()
+                    and detail.club.recruitStatus == 'OPEN'}">
+                    가입 및 가입 신청 처리는 다음 단계에서 제공됩니다.
+                </small>
+
+                <dl class="action-summary">
+                    <div>
+                        <dt>모집 상태</dt>
+                        <dd th:text="${detail.club.recruitStatusLabel()}">모집 중</dd>
+                    </div>
+                    <div>
+                        <dt>가입 방식</dt>
+                        <dd th:text="${detail.club.joinTypeLabel()}">승인 후 가입</dd>
+                    </div>
+                    <div>
+                        <dt>개설일</dt>
+                        <dd>
+                            <time th:if="${detail.club.createdAt != null}"
+                                  th:datetime="${detail.club.createdAt}"
+                                  th:text="${#temporals.format(detail.club.createdAt, 'yyyy.MM.dd')}">
+                                2026.07.27
+                            </time>
+                            <span th:unless="${detail.club.createdAt != null}">-</span>
+                        </dd>
+                    </div>
+                </dl>
+            </aside>
+        </div>
+    </article>
+
+    <div class="detail-bottom-action">
+        <a class="back-to-list-button" th:href="@{/clubs}">모임 목록으로 돌아가기</a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>
