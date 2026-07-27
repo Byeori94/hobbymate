@@ -24,19 +24,24 @@ import com.byeori.hobbymate.clubboard.dao.ClubNoticeDao;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeDetailView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeEditView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeSearchCondition;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeUpdateRequest;
 import com.byeori.hobbymate.clubboard.vo.ClubBoardAccess;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeAdjacentPost;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeDetail;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeListItem;
 import com.byeori.hobbymate.clubboard.vo.ClubPostCreation;
+import com.byeori.hobbymate.clubboard.vo.ClubPostUpdate;
 import com.byeori.hobbymate.common.exception.ClubBoardAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNotFoundException;
 import com.byeori.hobbymate.common.exception.ClubNoticeCreationException;
 import com.byeori.hobbymate.common.exception.ClubNoticeDetailException;
+import com.byeori.hobbymate.common.exception.ClubNoticeManagementAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNoticeNotFoundException;
+import com.byeori.hobbymate.common.exception.ClubNoticeUpdateException;
 
 @ExtendWith(MockitoExtension.class)
 class ClubNoticeServiceTest {
@@ -275,7 +280,7 @@ class ClubNoticeServiceTest {
     void createsNoticeWithServerOwnedValuesAndTrimmedText() {
         when(clubNoticeDao.findClubBoardAccess(1L, 7L))
                 .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "LEADER", "ACTIVE"));
-        when(clubNoticeDao.lockClubForPostCreation(1L)).thenReturn(1L);
+        when(clubNoticeDao.lockClubForPostMutation(1L)).thenReturn(1L);
         doAnswer(invocation -> {
             ClubPostCreation post = invocation.getArgument(0);
             post.setPostId(101L);
@@ -306,7 +311,7 @@ class ClubNoticeServiceTest {
     void pinnedNoticeIsLimitedToFiveWithinSameClubAndBoard() {
         when(clubNoticeDao.findClubBoardAccess(1L, 7L))
                 .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "MANAGER", "ACTIVE"));
-        when(clubNoticeDao.lockClubForPostCreation(1L)).thenReturn(1L);
+        when(clubNoticeDao.lockClubForPostMutation(1L)).thenReturn(1L);
         when(clubNoticeDao.countPinnedPosts(1L, "NOTICE")).thenReturn(5);
 
         assertThatThrownBy(() -> service.createNotice(
@@ -324,7 +329,7 @@ class ClubNoticeServiceTest {
     void serviceRejectsTrimmedLengthAndManipulatedPinnedValue() {
         when(clubNoticeDao.findClubBoardAccess(1L, 7L))
                 .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "LEADER", "ACTIVE"));
-        when(clubNoticeDao.lockClubForPostCreation(1L)).thenReturn(1L);
+        when(clubNoticeDao.lockClubForPostMutation(1L)).thenReturn(1L);
 
         assertThatThrownBy(() -> service.createNotice(
                 "1", 7L, request(" a ", "열 자 이상인 정상 공지 내용입니다.", "N")))
@@ -348,9 +353,112 @@ class ClubNoticeServiceTest {
                 request("권한 조작 공지", "권한 없는 회원이 작성하려는 충분히 긴 내용입니다.", "Y")))
                 .isInstanceOf(ClubNoticeCreationException.class)
                 .hasMessage("모임장과 운영진만 공지사항을 작성할 수 있습니다.");
-        verify(clubNoticeDao, never()).lockClubForPostCreation(any());
+        verify(clubNoticeDao, never()).lockClubForPostMutation(any());
         verify(clubNoticeDao, never()).insertClubPost(any());
         verify(clubNoticeDao, never()).countPinnedPosts(any(), eq("NOTICE"));
+    }
+
+    @Test
+    void currentManagerCanOpenEditFormWithoutIncreasingViewCount() {
+        when(clubNoticeDao.findClubBoardAccess(1L, 7L))
+                .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "MANAGER", "ACTIVE"));
+        when(clubNoticeDao.findNoticeDetail(1L, 10L)).thenReturn(detail(10L, 12L));
+
+        ClubNoticeEditView view = service.prepareUpdate(
+                "1", "10", 7L, new ClubNoticeListRequest());
+
+        assertThat(view.title()).isEqualTo("운영 안내");
+        assertThat(view.content()).isEqualTo("첫째 줄\n둘째 줄");
+        assertThat(view.pinnedYn()).isEqualTo("Y");
+        assertThat(view.canManageClub()).isTrue();
+        verify(clubNoticeDao, never()).incrementNoticeViewCount(any(), any());
+    }
+
+    @Test
+    void updateTrimsEditableFieldsAndPreservesServerOwnedColumnsInMapperCommand() {
+        when(clubNoticeDao.findClubBoardAccess(1L, 7L))
+                .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "LEADER", "ACTIVE"));
+        when(clubNoticeDao.lockClubForPostMutation(1L)).thenReturn(1L);
+        when(clubNoticeDao.findNoticeDetail(1L, 10L)).thenReturn(detail(10L, 12L));
+        when(clubNoticeDao.countPinnedPostsExcluding(1L, "NOTICE", 10L)).thenReturn(4);
+        when(clubNoticeDao.updateClubPost(any())).thenReturn(1);
+        ClubNoticeUpdateRequest request = updateRequest(
+                "  수정 공지 제목  ",
+                "  수정한 공지 내용은 충분히 깁니다.  ",
+                "Y");
+
+        service.updateNotice(
+                "1", "10", 7L, request, new ClubNoticeListRequest());
+
+        ArgumentCaptor<ClubPostUpdate> captor =
+                ArgumentCaptor.forClass(ClubPostUpdate.class);
+        verify(clubNoticeDao).updateClubPost(captor.capture());
+        ClubPostUpdate update = captor.getValue();
+        assertThat(update.clubId()).isEqualTo(1L);
+        assertThat(update.postId()).isEqualTo(10L);
+        assertThat(update.title()).isEqualTo("수정 공지 제목");
+        assertThat(update.content()).isEqualTo("수정한 공지 내용은 충분히 깁니다.");
+        assertThat(update.pinnedYn()).isEqualTo("Y");
+    }
+
+    @Test
+    void updatePinnedLimitExcludesCurrentNotice() {
+        when(clubNoticeDao.findClubBoardAccess(1L, 7L))
+                .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "MANAGER", "ACTIVE"));
+        when(clubNoticeDao.lockClubForPostMutation(1L)).thenReturn(1L);
+        when(clubNoticeDao.findNoticeDetail(1L, 10L)).thenReturn(detail(10L, 12L));
+        when(clubNoticeDao.countPinnedPostsExcluding(1L, "NOTICE", 10L)).thenReturn(5);
+
+        assertThatThrownBy(() -> service.updateNotice(
+                "1",
+                "10",
+                7L,
+                updateRequest(
+                        "수정 공지 제목",
+                        "수정한 공지 내용은 충분히 깁니다.",
+                        "Y"),
+                new ClubNoticeListRequest()))
+                .isInstanceOf(ClubNoticeUpdateException.class)
+                .hasMessage("상단 고정 게시글은 게시판별로 최대 5개까지 설정할 수 있습니다.")
+                .extracting("fieldName")
+                .isEqualTo("pinnedYn");
+        verify(clubNoticeDao, never()).updateClubPost(any());
+    }
+
+    @Test
+    void ordinaryMemberCannotUpdateOrDeleteEvenWhenOriginalAuthor() {
+        when(clubNoticeDao.findClubBoardAccess(1L, 8L))
+                .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "MEMBER", "ACTIVE"));
+
+        assertThatThrownBy(() -> service.updateNotice(
+                "1",
+                "10",
+                8L,
+                updateRequest(
+                        "수정 공지 제목",
+                        "수정한 공지 내용은 충분히 깁니다.",
+                        "N"),
+                new ClubNoticeListRequest()))
+                .isInstanceOf(ClubNoticeManagementAccessDeniedException.class);
+        assertThatThrownBy(() -> service.deleteNotice(
+                "1", "10", 8L, new ClubNoticeListRequest()))
+                .isInstanceOf(ClubNoticeManagementAccessDeniedException.class);
+        verify(clubNoticeDao, never()).lockClubForPostMutation(any());
+        verify(clubNoticeDao, never()).updateClubPost(any());
+        verify(clubNoticeDao, never()).softDeleteClubPost(any(), any());
+    }
+
+    @Test
+    void managerCanLogicallyDeleteAnActiveNotice() {
+        when(clubNoticeDao.findClubBoardAccess(1L, 7L))
+                .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "MANAGER", "ACTIVE"));
+        when(clubNoticeDao.lockClubForPostMutation(1L)).thenReturn(1L);
+        when(clubNoticeDao.findNoticeDetail(1L, 10L)).thenReturn(detail(10L, 12L));
+        when(clubNoticeDao.softDeleteClubPost(1L, 10L)).thenReturn(1);
+
+        service.deleteNotice("1", "10", 7L, new ClubNoticeListRequest());
+
+        verify(clubNoticeDao).softDeleteClubPost(1L, 10L);
     }
 
     private ClubNoticeCreateRequest request(
@@ -358,6 +466,17 @@ class ClubNoticeServiceTest {
             String content,
             String pinnedYn) {
         ClubNoticeCreateRequest request = new ClubNoticeCreateRequest();
+        request.setTitle(title);
+        request.setContent(content);
+        request.setPinnedYn(pinnedYn);
+        return request;
+    }
+
+    private ClubNoticeUpdateRequest updateRequest(
+            String title,
+            String content,
+            String pinnedYn) {
+        ClubNoticeUpdateRequest request = new ClubNoticeUpdateRequest();
         request.setTitle(title);
         request.setContent(content);
         request.setPinnedYn(pinnedYn);

@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const form = document.querySelector("[data-notice-create-form]");
+    const form = document.querySelector(
+        "[data-notice-create-form], [data-notice-update-form]"
+    );
     if (!form) {
         return;
     }
@@ -25,7 +27,8 @@ document.addEventListener("DOMContentLoaded", () => {
         form.dataset.submitting = "true";
         if (submitButton) {
             submitButton.disabled = true;
-            submitButton.textContent = "등록 중...";
+            submitButton.textContent =
+                form.dataset.submittingText || "처리 중...";
         }
     });
 });

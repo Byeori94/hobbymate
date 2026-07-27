@@ -15,20 +15,26 @@ import com.byeori.hobbymate.clubboard.dao.ClubNoticeDao;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeDetailView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeEditView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeReturnQuery;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeSearchCondition;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeUpdateRequest;
 import com.byeori.hobbymate.clubboard.vo.ClubBoardAccess;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeAdjacentPost;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeDetail;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeListItem;
 import com.byeori.hobbymate.clubboard.vo.ClubPostCreation;
+import com.byeori.hobbymate.clubboard.vo.ClubPostUpdate;
 import com.byeori.hobbymate.common.exception.ClubBoardAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNotFoundException;
 import com.byeori.hobbymate.common.exception.ClubNoticeCreationException;
 import com.byeori.hobbymate.common.exception.ClubNoticeDetailException;
+import com.byeori.hobbymate.common.exception.ClubNoticeDeletionException;
+import com.byeori.hobbymate.common.exception.ClubNoticeManagementAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNoticeNotFoundException;
+import com.byeori.hobbymate.common.exception.ClubNoticeUpdateException;
 
 @Service
 public class ClubNoticeService {
@@ -177,7 +183,7 @@ public class ClubNoticeService {
         }
 
         requireNoticeWriter(clubId, memberId);
-        Long lockedClubId = clubNoticeDao.lockClubForPostCreation(clubId);
+        Long lockedClubId = clubNoticeDao.lockClubForPostMutation(clubId);
         if (lockedClubId == null) {
             throw new ClubNotFoundException();
         }
@@ -224,6 +230,112 @@ public class ClubNoticeService {
         return post.getPostId();
     }
 
+    @Transactional(readOnly = true)
+    public ClubNoticeEditView prepareUpdate(
+            String rawClubId,
+            String rawPostId,
+            Long memberId,
+            ClubNoticeListRequest returnRequest) {
+        Long clubId = parseClubId(rawClubId);
+        Long postId = parsePostId(rawPostId);
+        ClubBoardAccess access = requireNoticeManager(clubId, memberId);
+        ClubNoticeDetail notice = clubNoticeDao.findNoticeDetail(clubId, postId);
+        if (notice == null) {
+            throw new ClubNoticeNotFoundException();
+        }
+        return new ClubNoticeEditView(
+                access.clubId(),
+                notice.postId(),
+                access.clubName(),
+                access.canManageClub(),
+                notice.title(),
+                notice.content(),
+                notice.pinnedYn(),
+                normalizeReturnQuery(returnRequest));
+    }
+
+    @Transactional
+    public ClubNoticeReturnQuery updateNotice(
+            String rawClubId,
+            String rawPostId,
+            Long memberId,
+            ClubNoticeUpdateRequest request,
+            ClubNoticeListRequest returnRequest) {
+        Long clubId = parseClubId(rawClubId);
+        Long postId = parsePostId(rawPostId);
+        requireNoticeManager(clubId, memberId);
+        lockActiveClub(clubId);
+        requireNoticeManager(clubId, memberId);
+        if (clubNoticeDao.findNoticeDetail(clubId, postId) == null) {
+            throw new ClubNoticeNotFoundException();
+        }
+
+        String title = normalizeUpdateTitle(request == null ? null : request.getTitle());
+        String content = normalizeUpdateContent(request == null ? null : request.getContent());
+        String pinnedYn =
+                normalizeUpdatePinnedYn(request == null ? null : request.getPinnedYn());
+        if ("Y".equals(pinnedYn)
+                && clubNoticeDao.countPinnedPostsExcluding(
+                        clubId, NOTICE_POST_TYPE, postId) >= MAX_PINNED_POSTS) {
+            throw new ClubNoticeUpdateException(
+                    "pinnedYn",
+                    "상단 고정 게시글은 게시판별로 최대 5개까지 설정할 수 있습니다.");
+        }
+
+        try {
+            ClubPostUpdate post =
+                    new ClubPostUpdate(clubId, postId, title, content, pinnedYn);
+            if (clubNoticeDao.updateClubPost(post) != 1) {
+                throw new ClubNoticeNotFoundException();
+            }
+        } catch (DataAccessException exception) {
+            log.error(
+                    "공지사항 UPDATE 중 DB 오류가 발생했습니다. clubId={}, postId={}, memberId={}",
+                    clubId,
+                    postId,
+                    memberId,
+                    exception);
+            throw new ClubNoticeUpdateException(
+                    "공지사항을 수정하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+                    exception);
+        }
+        return normalizeReturnQuery(returnRequest);
+    }
+
+    @Transactional
+    public ClubNoticeReturnQuery deleteNotice(
+            String rawClubId,
+            String rawPostId,
+            Long memberId,
+            ClubNoticeListRequest returnRequest) {
+        Long clubId = parseClubId(rawClubId);
+        Long postId = parsePostId(rawPostId);
+        requireNoticeManager(clubId, memberId);
+        lockActiveClub(clubId);
+        requireNoticeManager(clubId, memberId);
+        if (clubNoticeDao.findNoticeDetail(clubId, postId) == null) {
+            throw new ClubNoticeNotFoundException();
+        }
+        try {
+            if (clubNoticeDao.softDeleteClubPost(clubId, postId) != 1) {
+                throw new ClubNoticeNotFoundException();
+            }
+        } catch (DataAccessException exception) {
+            log.error(
+                    "공지사항 논리 삭제 중 DB 오류가 발생했습니다. clubId={}, postId={}, memberId={}",
+                    clubId,
+                    postId,
+                    memberId,
+                    exception);
+            throw new ClubNoticeDeletionException(
+                    clubId,
+                    postId,
+                    "공지사항을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+                    exception);
+        }
+        return normalizeReturnQuery(returnRequest);
+    }
+
     private ClubNoticeCreateView createView(ClubBoardAccess access) {
         return new ClubNoticeCreateView(
                 access.clubId(),
@@ -244,6 +356,27 @@ public class ClubNoticeService {
             throw ClubNoticeCreationException.accessDenied(clubId);
         }
         return access;
+    }
+
+    private ClubBoardAccess requireNoticeManager(Long clubId, Long memberId) {
+        if (memberId == null) {
+            throw new ClubNoticeManagementAccessDeniedException(clubId);
+        }
+        ClubBoardAccess access = clubNoticeDao.findClubBoardAccess(clubId, memberId);
+        if (access == null) {
+            throw new ClubNotFoundException();
+        }
+        if (!access.canManageClub()) {
+            throw new ClubNoticeManagementAccessDeniedException(clubId);
+        }
+        return access;
+    }
+
+    private void lockActiveClub(Long clubId) {
+        Long lockedClubId = clubNoticeDao.lockClubForPostMutation(clubId);
+        if (lockedClubId == null) {
+            throw new ClubNotFoundException();
+        }
     }
 
     private String normalizeTitle(String value) {
@@ -282,6 +415,47 @@ public class ClubNoticeService {
         String pinnedYn = value.trim();
         if (!"Y".equals(pinnedYn) && !"N".equals(pinnedYn)) {
             throw new ClubNoticeCreationException(
+                    "pinnedYn", "상단 고정 값이 올바르지 않습니다.");
+        }
+        return pinnedYn;
+    }
+
+    private String normalizeUpdateTitle(String value) {
+        String title = trim(value);
+        if (title == null) {
+            throw new ClubNoticeUpdateException("title", "제목을 입력해 주세요.");
+        }
+        if (title.length() < 2) {
+            throw new ClubNoticeUpdateException("title", "제목은 2자 이상 입력해 주세요.");
+        }
+        if (title.length() > 200) {
+            throw new ClubNoticeUpdateException("title", "제목은 200자 이하로 입력해 주세요.");
+        }
+        return title;
+    }
+
+    private String normalizeUpdateContent(String value) {
+        String content = trim(value);
+        if (content == null) {
+            throw new ClubNoticeUpdateException("content", "내용을 입력해 주세요.");
+        }
+        if (content.length() < 10) {
+            throw new ClubNoticeUpdateException("content", "내용은 10자 이상 입력해 주세요.");
+        }
+        if (content.length() > 10000) {
+            throw new ClubNoticeUpdateException(
+                    "content", "내용은 10,000자 이하로 입력해 주세요.");
+        }
+        return content;
+    }
+
+    private String normalizeUpdatePinnedYn(String value) {
+        if (value == null) {
+            return "N";
+        }
+        String pinnedYn = value.trim();
+        if (!"Y".equals(pinnedYn) && !"N".equals(pinnedYn)) {
+            throw new ClubNoticeUpdateException(
                     "pinnedYn", "상단 고정 값이 올바르지 않습니다.");
         }
         return pinnedYn;

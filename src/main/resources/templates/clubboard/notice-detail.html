@@ -46,6 +46,20 @@
         </div>
 
         <article class="notice-detail-content">
+            <div class="notice-flash notice-flash--success"
+                 th:if="${successMessage}"
+                 role="status"
+                 th:text="${successMessage}">
+                공지사항이 수정되었습니다.
+            </div>
+
+            <div class="notice-flash notice-flash--error"
+                 th:if="${errorMessage}"
+                 role="alert"
+                 th:text="${errorMessage}">
+                요청을 처리하지 못했습니다.
+            </div>
+
             <header class="notice-detail-header">
                 <div class="notice-detail-labels">
                     <span class="notice-detail-board-label">공지사항</span>
@@ -99,20 +113,34 @@
             <div class="notice-detail-admin-actions"
                  th:if="${noticeDetailView.canEditNotice or noticeDetailView.canDeleteNotice}"
                  aria-label="공지사항 관리">
-                <button class="notice-detail-button notice-detail-button--secondary"
-                        th:if="${noticeDetailView.canEditNotice}"
-                        type="button"
-                        data-notice-unavailable
-                        data-message="공지사항 수정 기능은 준비 중입니다.">
+                <a class="notice-detail-button notice-detail-button--secondary"
+                   th:if="${noticeDetailView.canEditNotice}"
+                   th:href="@{/clubs/{clubId}/notices/{postId}/edit(
+                        clubId=${noticeDetailView.clubId},
+                        postId=${noticeDetailView.notice.postId},
+                        page=${noticeDetailView.returnQuery.page},
+                        pageSize=${noticeDetailView.returnQuery.pageSize},
+                        searchType=${noticeDetailView.returnQuery.searchType},
+                        keyword=${noticeDetailView.returnQuery.keyword})}">
                     수정
-                </button>
-                <button class="notice-detail-button notice-detail-button--danger"
-                        th:if="${noticeDetailView.canDeleteNotice}"
-                        type="button"
-                        data-notice-unavailable
-                        data-message="공지사항 삭제 기능은 준비 중입니다.">
-                    삭제
-                </button>
+                </a>
+                <form class="notice-delete-form"
+                      th:if="${noticeDetailView.canDeleteNotice}"
+                      th:action="@{/clubs/{clubId}/notices/{postId}/delete(
+                            clubId=${noticeDetailView.clubId},
+                            postId=${noticeDetailView.notice.postId},
+                            page=${noticeDetailView.returnQuery.page},
+                            pageSize=${noticeDetailView.returnQuery.pageSize},
+                            searchType=${noticeDetailView.returnQuery.searchType},
+                            keyword=${noticeDetailView.returnQuery.keyword})}"
+                      method="post"
+                      data-notice-delete-form>
+                    <button class="notice-detail-button notice-detail-button--danger"
+                            type="submit"
+                            data-delete-button>
+                        삭제
+                    </button>
+                </form>
             </div>
 
             <nav class="notice-adjacent" aria-label="이전 및 다음 공지사항">

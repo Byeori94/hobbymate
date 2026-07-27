@@ -32,6 +32,7 @@ import com.byeori.hobbymate.auth.security.HobbyMateUserDetails;
 import com.byeori.hobbymate.club.dto.ClubPage;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeDetailView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeEditView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeReturnQuery;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeSearchCondition;
@@ -66,6 +67,12 @@ class ClubNoticeIntegrationTest {
                 .thenReturn(detailView(false));
         when(clubNoticeService.getNoticeDetail(eq("1"), eq("10"), eq(8L), any()))
                 .thenReturn(detailView(true));
+        when(clubNoticeService.prepareUpdate(eq("1"), eq("10"), eq(8L), any()))
+                .thenReturn(editView());
+        when(clubNoticeService.updateNotice(eq("1"), eq("10"), eq(8L), any(), any()))
+                .thenReturn(new ClubNoticeReturnQuery(2, 20, "TITLE", "운영"));
+        when(clubNoticeService.deleteNotice(eq("1"), eq("10"), eq(8L), any()))
+                .thenReturn(new ClubNoticeReturnQuery(2, 20, "TITLE", "운영"));
     }
 
     @Test
@@ -137,19 +144,104 @@ class ClubNoticeIntegrationTest {
     }
 
     @Test
-    void leaderSeesNonSubmittingEditAndDeleteButtonsWithExactMessages() throws Exception {
+    void leaderSeesActualEditLinkAndCsrfProtectedDeleteForm() throws Exception {
         mockMvc.perform(get("/clubs/1/notices/10").with(user(userDetails(8L))))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString(
-                        "data-message=\"공지사항 수정 기능은 준비 중입니다.\"")))
+                        "href=\"/clubs/1/notices/10/edit?page=2")))
                 .andExpect(content().string(Matchers.containsString(
-                        "data-message=\"공지사항 삭제 기능은 준비 중입니다.\"")))
+                        "action=\"/clubs/1/notices/10/delete?page=2")))
                 .andExpect(content().string(Matchers.containsString(
-                        "type=\"button\"")))
+                        "data-notice-delete-form")))
                 .andExpect(content().string(Matchers.containsString(
                         "src=\"/js/pages/club-notice-detail.js\"")))
                 .andExpect(content().string(Matchers.not(
-                        Matchers.containsString("/notices/10/edit"))));
+                        Matchers.containsString("기능은 준비 중입니다."))));
+    }
+
+    @Test
+    void leaderCanOpenEditFormWithExistingValuesAndReturnCondition() throws Exception {
+        mockMvc.perform(get("/clubs/1/notices/10/edit")
+                        .param("page", "2")
+                        .param("pageSize", "20")
+                        .param("searchType", "TITLE")
+                        .param("keyword", "운영")
+                        .with(user(userDetails(8L))))
+                .andExpect(status().isOk())
+                .andExpect(view().name("clubboard/notice-edit"))
+                .andExpect(content().string(Matchers.containsString("공지사항 수정")))
+                .andExpect(content().string(Matchers.containsString("기존 공지 제목")))
+                .andExpect(content().string(Matchers.containsString("기존 공지 내용입니다.")))
+                .andExpect(content().string(Matchers.containsString("checked")))
+                .andExpect(content().string(Matchers.containsString(
+                        "action=\"/clubs/1/notices/10/edit?page=2")))
+                .andExpect(content().string(Matchers.containsString(
+                        "aria-current=\"page\"")));
+    }
+
+    @Test
+    void validUpdateUsesPrgAndPreservesReturnCondition() throws Exception {
+        mockMvc.perform(post("/clubs/1/notices/10/edit")
+                        .param("title", "수정된 공지 제목")
+                        .param("content", "수정된 공지 내용은 열 자 이상입니다.")
+                        .param("pinnedYn", "N")
+                        .param("page", "2")
+                        .param("pageSize", "20")
+                        .param("searchType", "TITLE")
+                        .param("keyword", "운영")
+                        .with(user(userDetails(8L)))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(
+                        "/clubs/1/notices/10?page=2&pageSize=20"
+                                + "&searchType=TITLE&keyword=%EC%9A%B4%EC%98%81"))
+                .andExpect(flash().attribute(
+                        "successMessage", "공지사항이 수정되었습니다."));
+        verify(clubNoticeService)
+                .updateNotice(eq("1"), eq("10"), eq(8L), any(), any());
+    }
+
+    @Test
+    void invalidUpdatePreservesSubmittedValuesAndDoesNotUpdate() throws Exception {
+        mockMvc.perform(post("/clubs/1/notices/10/edit")
+                        .param("title", " ")
+                        .param("content", "짧음")
+                        .param("pinnedYn", "Y")
+                        .with(user(userDetails(8L)))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("clubboard/notice-edit"))
+                .andExpect(content().string(Matchers.containsString("제목을 입력해 주세요.")))
+                .andExpect(content().string(Matchers.containsString(
+                        "내용은 10자 이상 10,000자 이하로 입력해 주세요.")))
+                .andExpect(content().string(Matchers.containsString("checked")));
+        verify(clubNoticeService, never())
+                .updateNotice(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void deleteRequiresCsrfAndSuccessfulDeleteRedirectsToList() throws Exception {
+        mockMvc.perform(post("/clubs/1/notices/10/delete")
+                        .with(user(userDetails(8L))))
+                .andExpect(status().isForbidden());
+        verify(clubNoticeService, never())
+                .deleteNotice(any(), any(), any(), any());
+
+        mockMvc.perform(post("/clubs/1/notices/10/delete")
+                        .param("page", "2")
+                        .param("pageSize", "20")
+                        .param("searchType", "TITLE")
+                        .param("keyword", "운영")
+                        .with(user(userDetails(8L)))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl(
+                        "/clubs/1/notices?page=2&pageSize=20"
+                                + "&searchType=TITLE&keyword=%EC%9A%B4%EC%98%81"))
+                .andExpect(flash().attribute(
+                        "successMessage", "공지사항이 삭제되었습니다."));
+        verify(clubNoticeService)
+                .deleteNotice(eq("1"), eq("10"), eq(8L), any());
     }
 
     @Test
@@ -434,6 +526,18 @@ class ClubNoticeIntegrationTest {
                         11L,
                         "다음 공지",
                         LocalDateTime.of(2026, 7, 28, 10, 0)),
+                new ClubNoticeReturnQuery(2, 20, "TITLE", "운영"));
+    }
+
+    private ClubNoticeEditView editView() {
+        return new ClubNoticeEditView(
+                1L,
+                10L,
+                "주말 독서 모임",
+                true,
+                "기존 공지 제목",
+                "기존 공지 내용입니다.",
+                "Y",
                 new ClubNoticeReturnQuery(2, 20, "TITLE", "운영"));
     }
 }

@@ -17,14 +17,20 @@ import com.byeori.hobbymate.auth.security.HobbyMateUserDetails;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeDetailView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeEditView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeReturnQuery;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeUpdateRequest;
 import com.byeori.hobbymate.clubboard.service.ClubNoticeService;
 import com.byeori.hobbymate.common.exception.ClubBoardAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNotFoundException;
 import com.byeori.hobbymate.common.exception.ClubNoticeCreationException;
 import com.byeori.hobbymate.common.exception.ClubNoticeDetailException;
+import com.byeori.hobbymate.common.exception.ClubNoticeDeletionException;
+import com.byeori.hobbymate.common.exception.ClubNoticeManagementAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNoticeNotFoundException;
+import com.byeori.hobbymate.common.exception.ClubNoticeUpdateException;
 
 import jakarta.validation.Valid;
 
@@ -33,6 +39,7 @@ public class ClubNoticeController {
 
     private static final String LIST_VIEW = "clubboard/notice-list";
     private static final String CREATE_VIEW = "clubboard/notice-form";
+    private static final String UPDATE_VIEW = "clubboard/notice-edit";
     private static final String DETAIL_VIEW = "clubboard/notice-detail";
     private static final String NOT_FOUND_VIEW = "club/not-found";
     private static final String NOTICE_NOT_FOUND_VIEW = "clubboard/notice-not-found";
@@ -117,11 +124,103 @@ public class ClubNoticeController {
         }
     }
 
+    @GetMapping("/clubs/{clubId}/notices/{postId}/edit")
+    public String updateForm(
+            @PathVariable String clubId,
+            @PathVariable String postId,
+            @AuthenticationPrincipal HobbyMateUserDetails userDetails,
+            @ModelAttribute ClubNoticeListRequest returnRequest,
+            Model model) {
+        ClubNoticeEditView view = clubNoticeService.prepareUpdate(
+                clubId, postId, memberId(userDetails), returnRequest);
+        if (!model.containsAttribute("noticeUpdateRequest")) {
+            ClubNoticeUpdateRequest request = new ClubNoticeUpdateRequest();
+            request.setTitle(view.title());
+            request.setContent(view.content());
+            request.setPinnedYn(view.pinnedYn());
+            model.addAttribute("noticeUpdateRequest", request);
+        }
+        return updateView(view, model);
+    }
+
+    @PostMapping("/clubs/{clubId}/notices/{postId}/edit")
+    public String update(
+            @PathVariable String clubId,
+            @PathVariable String postId,
+            @AuthenticationPrincipal HobbyMateUserDetails userDetails,
+            @Valid @ModelAttribute("noticeUpdateRequest") ClubNoticeUpdateRequest request,
+            BindingResult bindingResult,
+            @ModelAttribute ClubNoticeListRequest returnRequest,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        Long memberId = memberId(userDetails);
+        if (bindingResult.hasErrors()) {
+            return updateView(
+                    clubNoticeService.prepareUpdate(
+                            clubId, postId, memberId, returnRequest),
+                    model);
+        }
+
+        try {
+            ClubNoticeReturnQuery returnQuery = clubNoticeService.updateNotice(
+                    clubId, postId, memberId, request, returnRequest);
+            addReturnQuery(redirectAttributes, returnQuery);
+            redirectAttributes.addFlashAttribute(
+                    "successMessage", "공지사항이 수정되었습니다.");
+            return "redirect:/clubs/" + clubId + "/notices/" + postId;
+        } catch (ClubNoticeUpdateException exception) {
+            if (exception.getFieldName() == null) {
+                bindingResult.reject("notice.update", exception.getMessage());
+            } else {
+                bindingResult.rejectValue(
+                        exception.getFieldName(),
+                        "notice.update." + exception.getFieldName(),
+                        exception.getMessage());
+            }
+            return updateView(
+                    clubNoticeService.prepareUpdate(
+                            clubId, postId, memberId, returnRequest),
+                    model);
+        }
+    }
+
+    @PostMapping("/clubs/{clubId}/notices/{postId}/delete")
+    public String delete(
+            @PathVariable String clubId,
+            @PathVariable String postId,
+            @AuthenticationPrincipal HobbyMateUserDetails userDetails,
+            @ModelAttribute ClubNoticeListRequest returnRequest,
+            RedirectAttributes redirectAttributes) {
+        ClubNoticeReturnQuery returnQuery = clubNoticeService.deleteNotice(
+                clubId, postId, memberId(userDetails), returnRequest);
+        addReturnQuery(redirectAttributes, returnQuery);
+        redirectAttributes.addFlashAttribute(
+                "successMessage", "공지사항이 삭제되었습니다.");
+        return "redirect:/clubs/" + clubId + "/notices";
+    }
+
     private String creationView(String clubId, Long memberId, Model model) {
         ClubNoticeCreateView view = clubNoticeService.prepareCreation(clubId, memberId);
         model.addAttribute("noticeCreateView", view);
         model.addAttribute("activeClubMenu", "NOTICE");
         return CREATE_VIEW;
+    }
+
+    private String updateView(ClubNoticeEditView view, Model model) {
+        model.addAttribute("noticeEditView", view);
+        model.addAttribute("activeClubMenu", "NOTICE");
+        return UPDATE_VIEW;
+    }
+
+    private void addReturnQuery(
+            RedirectAttributes redirectAttributes,
+            ClubNoticeReturnQuery returnQuery) {
+        redirectAttributes.addAttribute("page", returnQuery.page());
+        redirectAttributes.addAttribute("pageSize", returnQuery.pageSize());
+        redirectAttributes.addAttribute("searchType", returnQuery.searchType());
+        if (!returnQuery.keyword().isEmpty()) {
+            redirectAttributes.addAttribute("keyword", returnQuery.keyword());
+        }
     }
 
     @ExceptionHandler(ClubBoardAccessDeniedException.class)
@@ -148,6 +247,30 @@ public class ClubNoticeController {
         redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         Long clubId = exception.getClubId();
         return clubId == null ? "redirect:/" : "redirect:/clubs/" + clubId + "/notices";
+    }
+
+    @ExceptionHandler(ClubNoticeManagementAccessDeniedException.class)
+    public String handleManagementAccessDenied(
+            ClubNoticeManagementAccessDeniedException exception,
+            RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        Long clubId = exception.getClubId();
+        return clubId == null ? "redirect:/" : "redirect:/clubs/" + clubId;
+    }
+
+    @ExceptionHandler(ClubNoticeDeletionException.class)
+    public String handleDeletionFailure(
+            ClubNoticeDeletionException exception,
+            RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        Long clubId = exception.getClubId();
+        Long postId = exception.getPostId();
+        if (clubId == null) {
+            return "redirect:/";
+        }
+        return postId == null
+                ? "redirect:/clubs/" + clubId + "/notices"
+                : "redirect:/clubs/" + clubId + "/notices/" + postId;
     }
 
     @ExceptionHandler(ClubNoticeNotFoundException.class)

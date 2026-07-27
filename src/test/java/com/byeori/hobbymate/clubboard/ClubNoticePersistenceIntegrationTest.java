@@ -17,6 +17,7 @@ import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeDetailView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeSearchCondition;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeUpdateRequest;
 import com.byeori.hobbymate.clubboard.service.ClubNoticeService;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeListItem;
 
@@ -134,5 +135,82 @@ class ClubNoticePersistenceIntegrationTest {
                 "SELECT UPDATED_AT FROM HM_CLUB_POST WHERE CLUB_POST_ID = ?",
                 java.sql.Timestamp.class,
                 postId)).isEqualTo(stored.get("UPDATED_AT"));
+
+        jdbcTemplate.update(
+                """
+                UPDATE HM_CLUB_POST
+                SET UPDATED_AT = CURRENT_TIMESTAMP - INTERVAL 1 DAY
+                WHERE CLUB_POST_ID = ?
+                """,
+                normalPostId);
+        Map<String, Object> beforeUpdate = jdbcTemplate.queryForMap(
+                """
+                SELECT CLUB_ID, AUTHOR_MEMBER_ID, POST_TYPE, VIEW_COUNT,
+                       CREATED_AT, UPDATED_AT
+                FROM HM_CLUB_POST
+                WHERE CLUB_POST_ID = ?
+                """,
+                normalPostId);
+        ClubNoticeUpdateRequest updateRequest = new ClubNoticeUpdateRequest();
+        updateRequest.setTitle("수정된 공지 제목");
+        updateRequest.setContent("수정 처리 후에도 서버 관리값이 유지되는 충분히 긴 내용입니다.");
+        updateRequest.setPinnedYn("N");
+
+        clubNoticeService.updateNotice(
+                String.valueOf(clubId),
+                String.valueOf(normalPostId),
+                memberId,
+                updateRequest,
+                new ClubNoticeListRequest());
+
+        Map<String, Object> updated = jdbcTemplate.queryForMap(
+                """
+                SELECT CLUB_ID, AUTHOR_MEMBER_ID, POST_TYPE, TITLE, CONTENT,
+                       NOTICE_YN, POST_STATUS, VIEW_COUNT, CREATED_AT,
+                       UPDATED_AT, DELETED_AT
+                FROM HM_CLUB_POST
+                WHERE CLUB_POST_ID = ?
+                """,
+                normalPostId);
+        assertThat(updated.get("TITLE")).isEqualTo("수정된 공지 제목");
+        assertThat(updated.get("CONTENT"))
+                .isEqualTo("수정 처리 후에도 서버 관리값이 유지되는 충분히 긴 내용입니다.");
+        assertThat(updated.get("NOTICE_YN")).isEqualTo("N");
+        assertThat(updated.get("CLUB_ID")).isEqualTo(beforeUpdate.get("CLUB_ID"));
+        assertThat(updated.get("AUTHOR_MEMBER_ID"))
+                .isEqualTo(beforeUpdate.get("AUTHOR_MEMBER_ID"));
+        assertThat(updated.get("POST_TYPE")).isEqualTo(beforeUpdate.get("POST_TYPE"));
+        assertThat(updated.get("VIEW_COUNT")).isEqualTo(beforeUpdate.get("VIEW_COUNT"));
+        assertThat(updated.get("CREATED_AT")).isEqualTo(beforeUpdate.get("CREATED_AT"));
+        assertThat(((java.sql.Timestamp) updated.get("UPDATED_AT")).toLocalDateTime())
+                .isAfter(((java.sql.Timestamp) beforeUpdate.get("UPDATED_AT"))
+                        .toLocalDateTime());
+        assertThat(updated.get("DELETED_AT")).isNull();
+
+        clubNoticeService.deleteNotice(
+                String.valueOf(clubId),
+                String.valueOf(normalPostId),
+                memberId,
+                new ClubNoticeListRequest());
+
+        Map<String, Object> deleted = jdbcTemplate.queryForMap(
+                """
+                SELECT TITLE, CONTENT, NOTICE_YN, POST_STATUS, DELETED_AT
+                FROM HM_CLUB_POST
+                WHERE CLUB_POST_ID = ?
+                """,
+                normalPostId);
+        assertThat(deleted.get("TITLE")).isEqualTo(updated.get("TITLE"));
+        assertThat(deleted.get("CONTENT")).isEqualTo(updated.get("CONTENT"));
+        assertThat(deleted.get("NOTICE_YN")).isEqualTo("N");
+        assertThat(deleted.get("POST_STATUS")).isEqualTo("DELETED");
+        assertThat(deleted.get("DELETED_AT")).isNotNull();
+        assertThat(clubNoticeDao.findNoticeDetail(clubId, normalPostId)).isNull();
+        assertThat(clubNoticeDao.findNotices(
+                new ClubNoticeSearchCondition(
+                        clubId, "TITLE", "수정된 공지 제목",
+                        "%수정된 공지 제목%", 1, 20)))
+                .extracting(ClubNoticeListItem::postId)
+                .doesNotContain(normalPostId);
     }
 }

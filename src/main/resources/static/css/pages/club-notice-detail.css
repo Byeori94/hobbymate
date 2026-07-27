@@ -63,6 +63,10 @@
     border-top: 1px solid var(--notice-border);
 }
 
+.notice-delete-form {
+    display: inline-flex;
+}
+
 .notice-detail-button {
     display: inline-flex;
     min-width: 76px;
@@ -104,6 +108,11 @@
 
 .notice-detail-button:hover {
     filter: brightness(0.97);
+}
+
+.notice-detail-button:disabled {
+    opacity: 0.65;
+    cursor: wait;
 }
 
 .notice-adjacent {
@@ -172,6 +181,10 @@
     }
 
     .notice-detail-button {
+        width: 100%;
+    }
+
+    .notice-delete-form {
         width: 100%;
     }
 

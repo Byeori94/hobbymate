@@ -18,7 +18,7 @@
           AND C.CLUB_STATUS = 'ACTIVE'
     </select>
 
-    <select id="lockClubForPostCreation" resultType="long">
+    <select id="lockClubForPostMutation" resultType="long">
         SELECT C.CLUB_ID
         FROM HM_CLUB C
         WHERE C.CLUB_ID = #{clubId}
@@ -193,6 +193,17 @@
           AND P.DELETED_AT IS NULL
     </select>
 
+    <select id="countPinnedPostsExcluding" resultType="int">
+        SELECT COUNT(*)
+        FROM HM_CLUB_POST P
+        WHERE P.CLUB_ID = #{clubId}
+          AND P.POST_TYPE = #{postType}
+          AND P.CLUB_POST_ID &lt;&gt; #{excludedPostId}
+          AND P.NOTICE_YN = 'Y'
+          AND P.POST_STATUS = 'ACTIVE'
+          AND P.DELETED_AT IS NULL
+    </select>
+
     <insert id="insertClubPost"
             parameterType="com.byeori.hobbymate.clubboard.vo.ClubPostCreation"
             useGeneratedKeys="true"
@@ -226,5 +237,32 @@
             NULL
         )
     </insert>
+
+    <update id="updateClubPost"
+            parameterType="com.byeori.hobbymate.clubboard.vo.ClubPostUpdate">
+        UPDATE HM_CLUB_POST
+        SET TITLE = #{title},
+            CONTENT = #{content},
+            NOTICE_YN = #{pinnedYn},
+            UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE CLUB_ID = #{clubId}
+          AND CLUB_POST_ID = #{postId}
+          AND POST_TYPE = 'NOTICE'
+          AND POST_STATUS = 'ACTIVE'
+          AND DELETED_AT IS NULL
+    </update>
+
+    <update id="softDeleteClubPost">
+        UPDATE HM_CLUB_POST
+        SET POST_STATUS = 'DELETED',
+            NOTICE_YN = 'N',
+            UPDATED_AT = CURRENT_TIMESTAMP,
+            DELETED_AT = CURRENT_TIMESTAMP
+        WHERE CLUB_ID = #{clubId}
+          AND CLUB_POST_ID = #{postId}
+          AND POST_TYPE = 'NOTICE'
+          AND POST_STATUS = 'ACTIVE'
+          AND DELETED_AT IS NULL
+    </update>
 
 </mapper>

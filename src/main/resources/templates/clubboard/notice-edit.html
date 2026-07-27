@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" th:content="${noticeCreateView.clubName + ' 공지사항 작성'}">
-    <title th:text="${noticeCreateView.clubName + ' 공지사항 작성 | HobbyMate'}">
-        공지사항 작성 | HobbyMate
+    <meta name="description" th:content="${noticeEditView.clubName + ' 공지사항 수정'}">
+    <title th:text="${noticeEditView.clubName + ' 공지사항 수정 | HobbyMate'}">
+        공지사항 수정 | HobbyMate
     </title>
     <link rel="stylesheet" th:href="@{/css/common/header.css}">
     <link rel="stylesheet" th:href="@{/css/common/footer.css}">
@@ -21,37 +21,49 @@
 <header th:replace="~{fragments/header :: header}"></header>
 
 <main class="club-notice-page">
-    <nav class="club-notice-breadcrumb" aria-label="모임 탐색 경로">
-        <a th:href="@{/clubs/{clubId}/notices(clubId=${noticeCreateView.clubId})}">
-            ← 공지사항 목록으로
+    <nav class="club-notice-breadcrumb" aria-label="공지사항 탐색 경로">
+        <a th:href="@{/clubs/{clubId}/notices/{postId}(
+                clubId=${noticeEditView.clubId},
+                postId=${noticeEditView.postId},
+                page=${noticeEditView.returnQuery.page},
+                pageSize=${noticeEditView.returnQuery.pageSize},
+                searchType=${noticeEditView.returnQuery.searchType},
+                keyword=${noticeEditView.returnQuery.keyword})}">
+            ← 공지사항으로 돌아가기
         </a>
     </nav>
 
-    <section class="club-notice-shell" aria-labelledby="notice-form-title">
+    <section class="club-notice-shell" aria-labelledby="notice-edit-title">
         <header class="club-notice-club-heading">
             <p>CLUB BOARD</p>
-            <strong th:text="${noticeCreateView.clubName}">주말 독서 모임</strong>
+            <strong th:text="${noticeEditView.clubName}">주말 독서 모임</strong>
         </header>
 
         <div th:replace="~{fragments/club-nav :: clubNav(
-                clubId=${noticeCreateView.clubId},
+                clubId=${noticeEditView.clubId},
                 activeMenu=${activeClubMenu},
-                canManage=${noticeCreateView.canManageClub})}">
+                canManage=${noticeEditView.canManageClub})}">
         </div>
 
         <div class="club-notice-form-content">
             <header class="notice-form-heading">
                 <p>NOTICE</p>
-                <h1 id="notice-form-title">공지사항 작성</h1>
-                <span>모임 회원에게 안내할 중요한 내용을 작성해 주세요.</span>
+                <h1 id="notice-edit-title">공지사항 수정</h1>
+                <span>공지사항 내용을 수정할 수 있습니다.</span>
             </header>
 
             <form class="notice-create-form"
-                  th:action="@{/clubs/{clubId}/notices(clubId=${noticeCreateView.clubId})}"
-                  th:object="${noticeCreateRequest}"
+                  th:action="@{/clubs/{clubId}/notices/{postId}/edit(
+                        clubId=${noticeEditView.clubId},
+                        postId=${noticeEditView.postId},
+                        page=${noticeEditView.returnQuery.page},
+                        pageSize=${noticeEditView.returnQuery.pageSize},
+                        searchType=${noticeEditView.returnQuery.searchType},
+                        keyword=${noticeEditView.returnQuery.keyword})}"
+                  th:object="${noticeUpdateRequest}"
                   method="post"
-                  data-notice-create-form
-                  data-submitting-text="등록 중...">
+                  data-notice-update-form
+                  data-submitting-text="수정 중...">
                 <div class="notice-form-error-summary"
                      th:if="${#fields.hasGlobalErrors()}"
                      role="alert">
@@ -72,6 +84,7 @@
                            maxlength="200"
                            autocomplete="off"
                            required
+                           th:attr="aria-invalid=${#fields.hasErrors('title')}"
                            aria-describedby="title-help title-error">
                     <div class="notice-field-meta">
                         <p id="title-help">2자 이상 200자 이하로 입력해 주세요.</p>
@@ -92,6 +105,7 @@
                               maxlength="10000"
                               rows="16"
                               required
+                              th:attr="aria-invalid=${#fields.hasErrors('content')}"
                               aria-describedby="content-help content-error"></textarea>
                     <div class="notice-field-meta">
                         <p id="content-help">일반 텍스트로 10자 이상 10,000자 이하로 작성해 주세요.</p>
@@ -110,13 +124,13 @@
                                type="checkbox"
                                name="pinnedYn"
                                value="Y"
-                               th:checked="${noticeCreateRequest.pinnedYn == 'Y'}"
+                               th:checked="${noticeUpdateRequest.pinnedYn == 'Y'}"
                                aria-describedby="pinned-help pinned-error">
                         <span>
                             <strong>상단 고정</strong>
                             <small id="pinned-help">
                                 중요한 공지를 게시판 상단에 고정합니다.
-                                게시판별로 최대 5개까지 등록할 수 있습니다.
+                                게시판별로 최대 5개까지 설정할 수 있습니다.
                             </small>
                         </span>
                     </label>
@@ -128,13 +142,19 @@
 
                 <div class="notice-form-actions">
                     <a class="notice-form-cancel"
-                       th:href="@{/clubs/{clubId}/notices(clubId=${noticeCreateView.clubId})}">
+                       th:href="@{/clubs/{clubId}/notices/{postId}(
+                            clubId=${noticeEditView.clubId},
+                            postId=${noticeEditView.postId},
+                            page=${noticeEditView.returnQuery.page},
+                            pageSize=${noticeEditView.returnQuery.pageSize},
+                            searchType=${noticeEditView.returnQuery.searchType},
+                            keyword=${noticeEditView.returnQuery.keyword})}">
                         취소
                     </a>
                     <button class="notice-form-submit"
                             type="submit"
                             data-submit-button>
-                        공지 등록
+                        수정 완료
                     </button>
                 </div>
             </form>

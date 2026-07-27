@@ -11,6 +11,7 @@ import com.byeori.hobbymate.clubboard.vo.ClubNoticeAdjacentPost;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeDetail;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeListItem;
 import com.byeori.hobbymate.clubboard.vo.ClubPostCreation;
+import com.byeori.hobbymate.clubboard.vo.ClubPostUpdate;
 
 @Mapper
 public interface ClubNoticeDao {
@@ -19,7 +20,7 @@ public interface ClubNoticeDao {
             @Param("clubId") Long clubId,
             @Param("memberId") Long memberId);
 
-    Long lockClubForPostCreation(@Param("clubId") Long clubId);
+    Long lockClubForPostMutation(@Param("clubId") Long clubId);
 
     long countNotices(ClubNoticeSearchCondition search);
 
@@ -47,5 +48,16 @@ public interface ClubNoticeDao {
             @Param("clubId") Long clubId,
             @Param("postType") String postType);
 
+    int countPinnedPostsExcluding(
+            @Param("clubId") Long clubId,
+            @Param("postType") String postType,
+            @Param("excludedPostId") Long excludedPostId);
+
     int insertClubPost(ClubPostCreation post);
+
+    int updateClubPost(ClubPostUpdate post);
+
+    int softDeleteClubPost(
+            @Param("clubId") Long clubId,
+            @Param("postId") Long postId);
 }
