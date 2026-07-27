@@ -31,13 +31,18 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.byeori.hobbymate.auth.security.HobbyMateUserDetails;
 import com.byeori.hobbymate.club.dto.ClubPage;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeDetailView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeReturnQuery;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeSearchCondition;
 import com.byeori.hobbymate.clubboard.service.ClubNoticeService;
+import com.byeori.hobbymate.clubboard.vo.ClubNoticeAdjacentPost;
+import com.byeori.hobbymate.clubboard.vo.ClubNoticeDetail;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeListItem;
 import com.byeori.hobbymate.common.exception.ClubBoardAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNotFoundException;
 import com.byeori.hobbymate.common.exception.ClubNoticeCreationException;
+import com.byeori.hobbymate.common.exception.ClubNoticeNotFoundException;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -57,6 +62,10 @@ class ClubNoticeIntegrationTest {
                 .thenReturn(viewData("LEADER", true, true));
         when(clubNoticeService.prepareCreation("1", 8L))
                 .thenReturn(new ClubNoticeCreateView(1L, "주말 독서 모임", true, true));
+        when(clubNoticeService.getNoticeDetail(eq("1"), eq("10"), eq(7L), any()))
+                .thenReturn(detailView(false));
+        when(clubNoticeService.getNoticeDetail(eq("1"), eq("10"), eq(8L), any()))
+                .thenReturn(detailView(true));
     }
 
     @Test
@@ -64,6 +73,15 @@ class ClubNoticeIntegrationTest {
         mockMvc.perform(get("/clubs/1/notices"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("http://localhost/auth/login"));
+    }
+
+    @Test
+    void anonymousUserIsRedirectedBeforeNoticeDetailServiceRuns() throws Exception {
+        mockMvc.perform(get("/clubs/1/notices/10"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("http://localhost/auth/login"));
+        verify(clubNoticeService, never())
+                .getNoticeDetail(any(), any(), any(), any());
     }
 
     @Test
@@ -82,6 +100,56 @@ class ClubNoticeIntegrationTest {
                         Matchers.containsString("공지 작성"))))
                 .andExpect(content().string(Matchers.not(
                         Matchers.containsString("모임관리"))));
+    }
+
+    @Test
+    void activeMemberCanReadEscapedNoticeDetailAndReturnToSearchedPage() throws Exception {
+        mockMvc.perform(get("/clubs/1/notices/10")
+                        .param("page", "2")
+                        .param("pageSize", "20")
+                        .param("searchType", "TITLE")
+                        .param("keyword", "운영")
+                        .with(user(userDetails(7L))))
+                .andExpect(status().isOk())
+                .andExpect(view().name("clubboard/notice-detail"))
+                .andExpect(content().string(Matchers.containsString("공지 상세 제목")))
+                .andExpect(content().string(Matchers.containsString("첫째 줄")))
+                .andExpect(content().string(Matchers.containsString(
+                        "&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;")))
+                .andExpect(content().string(Matchers.not(
+                        Matchers.containsString("<script>alert('x')</script>"))))
+                .andExpect(content().string(Matchers.containsString("조회")))
+                .andExpect(content().string(Matchers.containsString(">13<")))
+                .andExpect(content().string(Matchers.containsString(
+                        "page=2&amp;pageSize=20&amp;searchType=TITLE")))
+                .andExpect(content().string(Matchers.containsString(
+                        "keyword=%EC%9A%B4%EC%98%81")))
+                .andExpect(content().string(Matchers.containsString(
+                        "href=\"/clubs/1/notices/9?page=2")))
+                .andExpect(content().string(Matchers.containsString(
+                        "href=\"/clubs/1/notices/11?page=2")))
+                .andExpect(content().string(Matchers.containsString(
+                        "aria-current=\"page\"")))
+                .andExpect(content().string(Matchers.not(
+                        Matchers.containsString("공지사항 수정 기능은 준비 중입니다."))))
+                .andExpect(content().string(Matchers.not(
+                        Matchers.containsString("공지사항 삭제 기능은 준비 중입니다."))));
+    }
+
+    @Test
+    void leaderSeesNonSubmittingEditAndDeleteButtonsWithExactMessages() throws Exception {
+        mockMvc.perform(get("/clubs/1/notices/10").with(user(userDetails(8L))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString(
+                        "data-message=\"공지사항 수정 기능은 준비 중입니다.\"")))
+                .andExpect(content().string(Matchers.containsString(
+                        "data-message=\"공지사항 삭제 기능은 준비 중입니다.\"")))
+                .andExpect(content().string(Matchers.containsString(
+                        "type=\"button\"")))
+                .andExpect(content().string(Matchers.containsString(
+                        "src=\"/js/pages/club-notice-detail.js\"")))
+                .andExpect(content().string(Matchers.not(
+                        Matchers.containsString("/notices/10/edit"))));
     }
 
     @Test
@@ -207,6 +275,33 @@ class ClubNoticeIntegrationTest {
     }
 
     @Test
+    void unavailableNoticeReturnsSafe404AndNoInternalInformation() throws Exception {
+        when(clubNoticeService.getNoticeDetail(eq("1"), eq("999"), eq(7L), any()))
+                .thenThrow(new ClubNoticeNotFoundException());
+
+        mockMvc.perform(get("/clubs/1/notices/999").with(user(userDetails(7L))))
+                .andExpect(status().isNotFound())
+                .andExpect(view().name("clubboard/notice-not-found"))
+                .andExpect(content().string(Matchers.containsString(
+                        "존재하지 않거나 확인할 수 없는 공지사항입니다.")))
+                .andExpect(content().string(Matchers.not(
+                        Matchers.containsString("HM_CLUB_POST"))));
+    }
+
+    @Test
+    void inactiveMemberDetailAccessRedirectsToClubHome() throws Exception {
+        when(clubNoticeService.getNoticeDetail(eq("2"), eq("10"), eq(7L), any()))
+                .thenThrow(new ClubBoardAccessDeniedException(2L));
+
+        mockMvc.perform(get("/clubs/2/notices/10").with(user(userDetails(7L))))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/clubs/2"))
+                .andExpect(flash().attribute(
+                        "errorMessage",
+                        "모임에 가입한 회원만 공지사항을 확인할 수 있습니다."));
+    }
+
+    @Test
     void contextPathIsAppliedToResourcesAndLinks() throws Exception {
         mockMvc.perform(get("/hobbymate/clubs/1/notices")
                         .contextPath("/hobbymate")
@@ -261,6 +356,21 @@ class ClubNoticeIntegrationTest {
                         "pageSize=20")));
     }
 
+    @Test
+    void listTitlesLinkToActualDetailAndPreserveCurrentCondition() throws Exception {
+        mockMvc.perform(get("/clubs/1/notices")
+                        .param("searchType", "TITLE_CONTENT")
+                        .param("page", "1")
+                        .param("pageSize", "20")
+                        .with(user(userDetails(7L))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString(
+                        "href=\"/clubs/1/notices/10?page=1&amp;pageSize=20"
+                                + "&amp;searchType=TITLE_CONTENT&amp;keyword=\"")))
+                .andExpect(content().string(Matchers.not(
+                        Matchers.containsString("상세 조회는 준비 중입니다."))));
+    }
+
     private ClubNoticeListView viewData(
             String role,
             boolean canManage,
@@ -294,5 +404,36 @@ class ClubNoticeIntegrationTest {
                 "벼리",
                 null,
                 List.of(new SimpleGrantedAuthority("ROLE_USER")));
+    }
+
+    private ClubNoticeDetailView detailView(boolean canManage) {
+        ClubNoticeDetail detail = new ClubNoticeDetail(
+                10L,
+                1L,
+                8L,
+                "공지 상세 제목",
+                "첫째 줄\n둘째 줄 <script>alert('x')</script>",
+                "벼리",
+                "LEADER",
+                "Y",
+                13L,
+                LocalDateTime.of(2026, 7, 27, 10, 0),
+                LocalDateTime.of(2026, 7, 27, 11, 0));
+        return new ClubNoticeDetailView(
+                1L,
+                "주말 독서 모임",
+                canManage,
+                canManage,
+                canManage,
+                detail,
+                new ClubNoticeAdjacentPost(
+                        9L,
+                        "이전 공지",
+                        LocalDateTime.of(2026, 7, 26, 10, 0)),
+                new ClubNoticeAdjacentPost(
+                        11L,
+                        "다음 공지",
+                        LocalDateTime.of(2026, 7, 28, 10, 0)),
+                new ClubNoticeReturnQuery(2, 20, "TITLE", "운영"));
     }
 }

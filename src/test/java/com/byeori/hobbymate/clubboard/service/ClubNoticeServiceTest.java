@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,15 +23,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.byeori.hobbymate.clubboard.dao.ClubNoticeDao;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeDetailView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeSearchCondition;
 import com.byeori.hobbymate.clubboard.vo.ClubBoardAccess;
+import com.byeori.hobbymate.clubboard.vo.ClubNoticeAdjacentPost;
+import com.byeori.hobbymate.clubboard.vo.ClubNoticeDetail;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeListItem;
 import com.byeori.hobbymate.clubboard.vo.ClubPostCreation;
 import com.byeori.hobbymate.common.exception.ClubBoardAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNotFoundException;
 import com.byeori.hobbymate.common.exception.ClubNoticeCreationException;
+import com.byeori.hobbymate.common.exception.ClubNoticeDetailException;
+import com.byeori.hobbymate.common.exception.ClubNoticeNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class ClubNoticeServiceTest {
@@ -68,6 +74,98 @@ class ClubNoticeServiceTest {
                 .isInstanceOf(ClubBoardAccessDeniedException.class)
                 .hasMessage("모임에 가입한 회원만 공지사항을 확인할 수 있습니다.");
         verify(clubNoticeDao, never()).countNotices(any());
+    }
+
+    @Test
+    void activeMemberCanReadDetailAndViewCountIsIncrementedAtomically() {
+        ClubNoticeDetail before = detail(10L, 12L);
+        ClubNoticeDetail after = detail(10L, 13L);
+        ClubNoticeAdjacentPost previous = adjacent(9L, "이전 공지", 9);
+        ClubNoticeAdjacentPost next = adjacent(11L, "다음 공지", 11);
+        when(clubNoticeDao.findClubBoardAccess(1L, 7L))
+                .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "MEMBER", "ACTIVE"));
+        when(clubNoticeDao.findNoticeDetail(1L, 10L)).thenReturn(before, after);
+        when(clubNoticeDao.incrementNoticeViewCount(1L, 10L)).thenReturn(1);
+        when(clubNoticeDao.findPreviousNotice(1L, 10L, after.createdAt()))
+                .thenReturn(previous);
+        when(clubNoticeDao.findNextNotice(1L, 10L, after.createdAt()))
+                .thenReturn(next);
+        ClubNoticeListRequest request = new ClubNoticeListRequest();
+        request.setPage("2");
+        request.setPageSize("50");
+        request.setSearchType("TITLE");
+        request.setKeyword(" 운영 ");
+
+        ClubNoticeDetailView view =
+                service.getNoticeDetail("1", "10", 7L, request);
+
+        assertThat(view.notice().viewCount()).isEqualTo(13L);
+        assertThat(view.previousNotice()).isEqualTo(previous);
+        assertThat(view.nextNotice()).isEqualTo(next);
+        assertThat(view.canEditNotice()).isFalse();
+        assertThat(view.canDeleteNotice()).isFalse();
+        assertThat(view.returnQuery().page()).isEqualTo(2);
+        assertThat(view.returnQuery().pageSize()).isEqualTo(50);
+        assertThat(view.returnQuery().searchType()).isEqualTo("TITLE");
+        assertThat(view.returnQuery().keyword()).isEqualTo("운영");
+        verify(clubNoticeDao, times(2)).findNoticeDetail(1L, 10L);
+        verify(clubNoticeDao).incrementNoticeViewCount(1L, 10L);
+    }
+
+    @Test
+    void currentActiveLeaderOrManagerReceivesDetailManagementButtons() {
+        ClubNoticeDetail detail = detail(10L, 3L);
+        when(clubNoticeDao.findClubBoardAccess(1L, 7L))
+                .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "MANAGER", "ACTIVE"));
+        when(clubNoticeDao.findNoticeDetail(1L, 10L)).thenReturn(detail, detail);
+        when(clubNoticeDao.incrementNoticeViewCount(1L, 10L)).thenReturn(1);
+
+        ClubNoticeDetailView view =
+                service.getNoticeDetail("1", "10", 7L, new ClubNoticeListRequest());
+
+        assertThat(view.canManageClub()).isTrue();
+        assertThat(view.canEditNotice()).isTrue();
+        assertThat(view.canDeleteNotice()).isTrue();
+    }
+
+    @Test
+    void inaccessibleOrMissingNoticeNeverIncrementsViewCount() {
+        when(clubNoticeDao.findClubBoardAccess(1L, 7L))
+                .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "MEMBER", "LEFT"));
+
+        assertThatThrownBy(() ->
+                service.getNoticeDetail("1", "10", 7L, new ClubNoticeListRequest()))
+                .isInstanceOf(ClubBoardAccessDeniedException.class);
+        verify(clubNoticeDao, never()).findNoticeDetail(any(), any());
+        verify(clubNoticeDao, never()).incrementNoticeViewCount(any(), any());
+
+        when(clubNoticeDao.findClubBoardAccess(1L, 8L))
+                .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "MEMBER", "ACTIVE"));
+        when(clubNoticeDao.findNoticeDetail(1L, 99L)).thenReturn(null);
+        assertThatThrownBy(() ->
+                service.getNoticeDetail("1", "99", 8L, new ClubNoticeListRequest()))
+                .isInstanceOf(ClubNoticeNotFoundException.class)
+                .hasMessage("존재하지 않거나 확인할 수 없는 공지사항입니다.");
+        verify(clubNoticeDao, never()).incrementNoticeViewCount(1L, 99L);
+    }
+
+    @Test
+    void invalidPostIdIsSafeNotFoundAndFailedIncrementIsNotSuccessful() {
+        assertThatThrownBy(() ->
+                service.getNoticeDetail("1", "not-number", 7L, new ClubNoticeListRequest()))
+                .isInstanceOf(ClubNoticeNotFoundException.class);
+
+        ClubNoticeDetail detail = detail(10L, 12L);
+        when(clubNoticeDao.findClubBoardAccess(1L, 7L))
+                .thenReturn(new ClubBoardAccess(1L, "주말 독서 모임", "MEMBER", "ACTIVE"));
+        when(clubNoticeDao.findNoticeDetail(1L, 10L)).thenReturn(detail);
+        when(clubNoticeDao.incrementNoticeViewCount(1L, 10L)).thenReturn(0);
+
+        assertThatThrownBy(() ->
+                service.getNoticeDetail("1", "10", 7L, new ClubNoticeListRequest()))
+                .isInstanceOf(ClubNoticeDetailException.class)
+                .hasMessage("공지사항을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+        verify(clubNoticeDao, times(1)).findNoticeDetail(1L, 10L);
     }
 
     @Test
@@ -277,5 +375,27 @@ class ClubNoticeServiceTest {
                 LocalDateTime.of(2026, 7, 27, 10, 0),
                 LocalDateTime.of(2026, 7, 27, 10, 0),
                 null);
+    }
+
+    private ClubNoticeDetail detail(Long postId, long viewCount) {
+        return new ClubNoticeDetail(
+                postId,
+                1L,
+                8L,
+                "운영 안내",
+                "첫째 줄\n둘째 줄",
+                "벼리",
+                "LEADER",
+                "Y",
+                viewCount,
+                LocalDateTime.of(2026, 7, 27, 10, 0),
+                LocalDateTime.of(2026, 7, 27, 10, 0));
+    }
+
+    private ClubNoticeAdjacentPost adjacent(Long postId, String title, int hour) {
+        return new ClubNoticeAdjacentPost(
+                postId,
+                title,
+                LocalDateTime.of(2026, 7, 27, hour, 0));
     }
 }

@@ -16,12 +16,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.byeori.hobbymate.auth.security.HobbyMateUserDetails;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeDetailView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListView;
 import com.byeori.hobbymate.clubboard.service.ClubNoticeService;
 import com.byeori.hobbymate.common.exception.ClubBoardAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNotFoundException;
 import com.byeori.hobbymate.common.exception.ClubNoticeCreationException;
+import com.byeori.hobbymate.common.exception.ClubNoticeDetailException;
+import com.byeori.hobbymate.common.exception.ClubNoticeNotFoundException;
 
 import jakarta.validation.Valid;
 
@@ -30,7 +33,9 @@ public class ClubNoticeController {
 
     private static final String LIST_VIEW = "clubboard/notice-list";
     private static final String CREATE_VIEW = "clubboard/notice-form";
+    private static final String DETAIL_VIEW = "clubboard/notice-detail";
     private static final String NOT_FOUND_VIEW = "club/not-found";
+    private static final String NOTICE_NOT_FOUND_VIEW = "clubboard/notice-not-found";
 
     private final ClubNoticeService clubNoticeService;
 
@@ -60,6 +65,20 @@ public class ClubNoticeController {
             model.addAttribute("noticeCreateRequest", new ClubNoticeCreateRequest());
         }
         return creationView(clubId, memberId(userDetails), model);
+    }
+
+    @GetMapping("/clubs/{clubId}/notices/{postId}")
+    public String detail(
+            @PathVariable String clubId,
+            @PathVariable String postId,
+            @AuthenticationPrincipal HobbyMateUserDetails userDetails,
+            @ModelAttribute ClubNoticeListRequest request,
+            Model model) {
+        ClubNoticeDetailView view = clubNoticeService.getNoticeDetail(
+                clubId, postId, memberId(userDetails), request);
+        model.addAttribute("noticeDetailView", view);
+        model.addAttribute("activeClubMenu", "NOTICE");
+        return DETAIL_VIEW;
     }
 
     @PostMapping("/clubs/{clubId}/notices")
@@ -120,6 +139,24 @@ public class ClubNoticeController {
         redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
         Long clubId = exception.getClubId();
         return clubId == null ? "redirect:/" : "redirect:/clubs/" + clubId;
+    }
+
+    @ExceptionHandler(ClubNoticeDetailException.class)
+    public String handleDetailFailure(
+            ClubNoticeDetailException exception,
+            RedirectAttributes redirectAttributes) {
+        redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());
+        Long clubId = exception.getClubId();
+        return clubId == null ? "redirect:/" : "redirect:/clubs/" + clubId + "/notices";
+    }
+
+    @ExceptionHandler(ClubNoticeNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String handleNoticeNotFound(
+            ClubNoticeNotFoundException exception,
+            Model model) {
+        model.addAttribute("errorMessage", exception.getMessage());
+        return NOTICE_NOT_FOUND_VIEW;
     }
 
     @ExceptionHandler(ClubNotFoundException.class)

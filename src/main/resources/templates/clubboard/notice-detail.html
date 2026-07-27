@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description"
+          th:content="${noticeDetailView.notice.title + ' | ' + noticeDetailView.clubName + ' 공지사항'}">
+    <title th:text="${noticeDetailView.notice.title + ' | HobbyMate'}">
+        공지사항 상세 | HobbyMate
+    </title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/common/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/common/club-nav.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/club-notice-list.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/club-notice-detail.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/common/club-nav.js}"></script>
+    <script defer th:src="@{/js/pages/club-notice-detail.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="club-notice-page">
+    <nav class="club-notice-breadcrumb" aria-label="공지사항 탐색 경로">
+        <a th:href="@{/clubs/{clubId}/notices(
+                clubId=${noticeDetailView.clubId},
+                page=${noticeDetailView.returnQuery.page},
+                pageSize=${noticeDetailView.returnQuery.pageSize},
+                searchType=${noticeDetailView.returnQuery.searchType},
+                keyword=${noticeDetailView.returnQuery.keyword})}">
+            ← 공지사항 목록으로
+        </a>
+    </nav>
+
+    <section class="club-notice-shell" aria-label="모임 공지사항">
+        <header class="club-notice-club-heading">
+            <p>CLUB BOARD</p>
+            <strong th:text="${noticeDetailView.clubName}">주말 독서 모임</strong>
+        </header>
+
+        <div th:replace="~{fragments/club-nav :: clubNav(
+                clubId=${noticeDetailView.clubId},
+                activeMenu=${activeClubMenu},
+                canManage=${noticeDetailView.canManageClub})}">
+        </div>
+
+        <article class="notice-detail-content">
+            <header class="notice-detail-header">
+                <div class="notice-detail-labels">
+                    <span class="notice-detail-board-label">공지사항</span>
+                    <span class="notice-fixed-label"
+                          th:if="${noticeDetailView.notice.pinned}">고정</span>
+                </div>
+
+                <h1 th:text="${noticeDetailView.notice.title}">
+                    8월 정기 만남 안내
+                </h1>
+
+                <div class="notice-detail-meta">
+                    <span class="notice-role-badge"
+                          th:if="${!#strings.isEmpty(noticeDetailView.notice.writerRoleLabel())}"
+                          th:text="${noticeDetailView.notice.writerRoleLabel()}">
+                        모임장
+                    </span>
+                    <span th:text="${noticeDetailView.notice.writerDisplayName()}">벼리</span>
+                    <span aria-hidden="true">·</span>
+                    <time th:if="${noticeDetailView.notice.createdAt != null}"
+                          th:datetime="${noticeDetailView.notice.createdAt}"
+                          th:text="${#temporals.format(
+                              noticeDetailView.notice.createdAt, 'yyyy.MM.dd HH:mm')}">
+                        2026.08.01 13:30
+                    </time>
+                    <span th:unless="${noticeDetailView.notice.createdAt != null}">작성일 -</span>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                        조회
+                        <strong th:text="${noticeDetailView.notice.viewCount}">12</strong>
+                    </span>
+                </div>
+
+                <p class="notice-detail-updated"
+                   th:if="${noticeDetailView.notice.modified}">
+                    수정
+                    <time th:datetime="${noticeDetailView.notice.updatedAt}"
+                          th:text="${#temporals.format(
+                              noticeDetailView.notice.updatedAt, 'yyyy.MM.dd HH:mm')}">
+                        2026.08.02 09:10
+                    </time>
+                </p>
+            </header>
+
+            <div class="notice-detail-body"
+                 th:text="${noticeDetailView.notice.content}">
+                안녕하세요.
+                8월 정기 만남 일정을 안내합니다.
+            </div>
+
+            <div class="notice-detail-admin-actions"
+                 th:if="${noticeDetailView.canEditNotice or noticeDetailView.canDeleteNotice}"
+                 aria-label="공지사항 관리">
+                <button class="notice-detail-button notice-detail-button--secondary"
+                        th:if="${noticeDetailView.canEditNotice}"
+                        type="button"
+                        data-notice-unavailable
+                        data-message="공지사항 수정 기능은 준비 중입니다.">
+                    수정
+                </button>
+                <button class="notice-detail-button notice-detail-button--danger"
+                        th:if="${noticeDetailView.canDeleteNotice}"
+                        type="button"
+                        data-notice-unavailable
+                        data-message="공지사항 삭제 기능은 준비 중입니다.">
+                    삭제
+                </button>
+            </div>
+
+            <nav class="notice-adjacent" aria-label="이전 및 다음 공지사항">
+                <div class="notice-adjacent-row">
+                    <span class="notice-adjacent-label">이전 글</span>
+                    <a th:if="${noticeDetailView.previousNotice != null}"
+                       th:href="@{/clubs/{clubId}/notices/{postId}(
+                            clubId=${noticeDetailView.clubId},
+                            postId=${noticeDetailView.previousNotice.postId},
+                            page=${noticeDetailView.returnQuery.page},
+                            pageSize=${noticeDetailView.returnQuery.pageSize},
+                            searchType=${noticeDetailView.returnQuery.searchType},
+                            keyword=${noticeDetailView.returnQuery.keyword})}"
+                       th:text="${noticeDetailView.previousNotice.title}">
+                        이전 공지 제목
+                    </a>
+                    <span class="notice-adjacent-empty"
+                          th:unless="${noticeDetailView.previousNotice != null}">
+                        이전 글이 없습니다.
+                    </span>
+                    <time th:if="${noticeDetailView.previousNotice != null
+                                  and noticeDetailView.previousNotice.createdAt != null}"
+                          th:datetime="${noticeDetailView.previousNotice.createdAt}"
+                          th:text="${#temporals.format(
+                              noticeDetailView.previousNotice.createdAt, 'yyyy.MM.dd')}">
+                        2026.07.31
+                    </time>
+                </div>
+
+                <div class="notice-adjacent-row">
+                    <span class="notice-adjacent-label">다음 글</span>
+                    <a th:if="${noticeDetailView.nextNotice != null}"
+                       th:href="@{/clubs/{clubId}/notices/{postId}(
+                            clubId=${noticeDetailView.clubId},
+                            postId=${noticeDetailView.nextNotice.postId},
+                            page=${noticeDetailView.returnQuery.page},
+                            pageSize=${noticeDetailView.returnQuery.pageSize},
+                            searchType=${noticeDetailView.returnQuery.searchType},
+                            keyword=${noticeDetailView.returnQuery.keyword})}"
+                       th:text="${noticeDetailView.nextNotice.title}">
+                        다음 공지 제목
+                    </a>
+                    <span class="notice-adjacent-empty"
+                          th:unless="${noticeDetailView.nextNotice != null}">
+                        다음 글이 없습니다.
+                    </span>
+                    <time th:if="${noticeDetailView.nextNotice != null
+                                  and noticeDetailView.nextNotice.createdAt != null}"
+                          th:datetime="${noticeDetailView.nextNotice.createdAt}"
+                          th:text="${#temporals.format(
+                              noticeDetailView.nextNotice.createdAt, 'yyyy.MM.dd')}">
+                        2026.08.03
+                    </time>
+                </div>
+            </nav>
+
+            <div class="notice-detail-list-action">
+                <a class="notice-detail-button notice-detail-button--primary"
+                   th:href="@{/clubs/{clubId}/notices(
+                        clubId=${noticeDetailView.clubId},
+                        page=${noticeDetailView.returnQuery.page},
+                        pageSize=${noticeDetailView.returnQuery.pageSize},
+                        searchType=${noticeDetailView.returnQuery.searchType},
+                        keyword=${noticeDetailView.returnQuery.keyword})}">
+                    목록
+                </a>
+            </div>
+        </article>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

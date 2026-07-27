@@ -71,6 +71,8 @@
                END AS writerNickname,
                CASE
                    WHEN AUTHOR_CM.MEMBER_STATUS = 'ACTIVE'
+                        AND M.MEMBER_STATUS IS NOT NULL
+                        AND M.MEMBER_STATUS &lt;&gt; 'WITHDRAWN'
                         AND AUTHOR_CM.CLUB_ROLE IN ('LEADER', 'MANAGER')
                    THEN AUTHOR_CM.CLUB_ROLE
                    ELSE NULL
@@ -91,6 +93,94 @@
                  P.CREATED_AT DESC,
                  P.CLUB_POST_ID DESC
         LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <sql id="publicNoticeByIdConditions">
+        WHERE P.CLUB_ID = #{clubId}
+          AND P.CLUB_POST_ID = #{postId}
+          AND P.POST_TYPE = 'NOTICE'
+          AND P.POST_STATUS = 'ACTIVE'
+          AND P.DELETED_AT IS NULL
+    </sql>
+
+    <select id="findNoticeDetail"
+            resultType="com.byeori.hobbymate.clubboard.vo.ClubNoticeDetail">
+        SELECT P.CLUB_POST_ID AS postId,
+               P.CLUB_ID AS clubId,
+               P.AUTHOR_MEMBER_ID AS writerMemberId,
+               P.TITLE AS title,
+               P.CONTENT AS content,
+               CASE
+                   WHEN AUTHOR_CM.MEMBER_STATUS = 'LEFT' THEN '탈퇴한 회원'
+                   WHEN AUTHOR_CM.MEMBER_STATUS = 'KICKED' THEN '강퇴된 회원'
+                   WHEN M.MEMBER_STATUS = 'WITHDRAWN' THEN '탈퇴한 회원'
+                   ELSE COALESCE(M.NICKNAME, '알 수 없는 회원')
+               END AS writerNickname,
+               CASE
+                   WHEN AUTHOR_CM.MEMBER_STATUS = 'ACTIVE'
+                        AND M.MEMBER_STATUS IS NOT NULL
+                        AND M.MEMBER_STATUS &lt;&gt; 'WITHDRAWN'
+                        AND AUTHOR_CM.CLUB_ROLE IN ('LEADER', 'MANAGER')
+                   THEN AUTHOR_CM.CLUB_ROLE
+                   ELSE NULL
+               END AS writerRole,
+               P.NOTICE_YN AS pinnedYn,
+               P.VIEW_COUNT AS viewCount,
+               P.CREATED_AT AS createdAt,
+               P.UPDATED_AT AS updatedAt
+        FROM HM_CLUB_POST P
+        LEFT JOIN HM_MEMBER M
+               ON M.MEMBER_ID = P.AUTHOR_MEMBER_ID
+        LEFT JOIN HM_CLUB_MEMBER AUTHOR_CM
+               ON AUTHOR_CM.CLUB_ID = P.CLUB_ID
+              AND AUTHOR_CM.MEMBER_ID = P.AUTHOR_MEMBER_ID
+        <include refid="publicNoticeByIdConditions"/>
+    </select>
+
+    <update id="incrementNoticeViewCount">
+        UPDATE HM_CLUB_POST P
+        SET VIEW_COUNT = P.VIEW_COUNT + 1,
+            UPDATED_AT = P.UPDATED_AT
+        <include refid="publicNoticeByIdConditions"/>
+    </update>
+
+    <sql id="adjacentNoticeConditions">
+        P.CLUB_ID = #{clubId}
+        AND P.POST_TYPE = 'NOTICE'
+        AND P.POST_STATUS = 'ACTIVE'
+        AND P.DELETED_AT IS NULL
+    </sql>
+
+    <select id="findPreviousNotice"
+            resultType="com.byeori.hobbymate.clubboard.vo.ClubNoticeAdjacentPost">
+        SELECT P.CLUB_POST_ID AS postId,
+               P.TITLE AS title,
+               P.CREATED_AT AS createdAt
+        FROM HM_CLUB_POST P
+        WHERE <include refid="adjacentNoticeConditions"/>
+          AND (
+              P.CREATED_AT &lt; #{createdAt}
+              OR (P.CREATED_AT = #{createdAt} AND P.CLUB_POST_ID &lt; #{postId})
+          )
+        ORDER BY P.CREATED_AT DESC,
+                 P.CLUB_POST_ID DESC
+        LIMIT 1
+    </select>
+
+    <select id="findNextNotice"
+            resultType="com.byeori.hobbymate.clubboard.vo.ClubNoticeAdjacentPost">
+        SELECT P.CLUB_POST_ID AS postId,
+               P.TITLE AS title,
+               P.CREATED_AT AS createdAt
+        FROM HM_CLUB_POST P
+        WHERE <include refid="adjacentNoticeConditions"/>
+          AND (
+              P.CREATED_AT &gt; #{createdAt}
+              OR (P.CREATED_AT = #{createdAt} AND P.CLUB_POST_ID &gt; #{postId})
+          )
+        ORDER BY P.CREATED_AT ASC,
+                 P.CLUB_POST_ID ASC
+        LIMIT 1
     </select>
 
     <select id="countPinnedPosts" resultType="int">

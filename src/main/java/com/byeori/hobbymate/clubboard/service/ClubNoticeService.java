@@ -14,15 +14,21 @@ import com.byeori.hobbymate.club.dto.ClubPage;
 import com.byeori.hobbymate.clubboard.dao.ClubNoticeDao;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeDetailView;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeListView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeReturnQuery;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeSearchCondition;
 import com.byeori.hobbymate.clubboard.vo.ClubBoardAccess;
+import com.byeori.hobbymate.clubboard.vo.ClubNoticeAdjacentPost;
+import com.byeori.hobbymate.clubboard.vo.ClubNoticeDetail;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeListItem;
 import com.byeori.hobbymate.clubboard.vo.ClubPostCreation;
 import com.byeori.hobbymate.common.exception.ClubBoardAccessDeniedException;
 import com.byeori.hobbymate.common.exception.ClubNotFoundException;
 import com.byeori.hobbymate.common.exception.ClubNoticeCreationException;
+import com.byeori.hobbymate.common.exception.ClubNoticeDetailException;
+import com.byeori.hobbymate.common.exception.ClubNoticeNotFoundException;
 
 @Service
 public class ClubNoticeService {
@@ -89,6 +95,75 @@ public class ClubNoticeService {
         Long clubId = parseClubId(rawClubId);
         ClubBoardAccess access = requireNoticeWriter(clubId, memberId);
         return createView(access);
+    }
+
+    @Transactional
+    public ClubNoticeDetailView getNoticeDetail(
+            String rawClubId,
+            String rawPostId,
+            Long memberId,
+            ClubNoticeListRequest returnRequest) {
+        Long clubId = parseClubId(rawClubId);
+        Long postId = parsePostId(rawPostId);
+        if (memberId == null) {
+            throw new ClubBoardAccessDeniedException(clubId);
+        }
+
+        try {
+            ClubBoardAccess access = clubNoticeDao.findClubBoardAccess(clubId, memberId);
+            if (access == null) {
+                throw new ClubNotFoundException();
+            }
+            if (!access.isActiveMember()) {
+                throw new ClubBoardAccessDeniedException(clubId);
+            }
+
+            ClubNoticeDetail notice = clubNoticeDao.findNoticeDetail(clubId, postId);
+            if (notice == null) {
+                throw new ClubNoticeNotFoundException();
+            }
+            if (clubNoticeDao.incrementNoticeViewCount(clubId, postId) != 1) {
+                log.warn(
+                        "공지사항 조회 수 증가 대상이 1건이 아닙니다. clubId={}, postId={}, memberId={}",
+                        clubId,
+                        postId,
+                        memberId);
+                throw new ClubNoticeDetailException(clubId, null);
+            }
+
+            ClubNoticeDetail countedNotice = clubNoticeDao.findNoticeDetail(clubId, postId);
+            if (countedNotice == null) {
+                log.warn(
+                        "조회 수 증가 후 공지사항을 다시 찾을 수 없습니다. clubId={}, postId={}, memberId={}",
+                        clubId,
+                        postId,
+                        memberId);
+                throw new ClubNoticeDetailException(clubId, null);
+            }
+            ClubNoticeAdjacentPost previous = clubNoticeDao.findPreviousNotice(
+                    clubId, postId, countedNotice.createdAt());
+            ClubNoticeAdjacentPost next = clubNoticeDao.findNextNotice(
+                    clubId, postId, countedNotice.createdAt());
+            boolean canManage = access.canManageClub();
+            return new ClubNoticeDetailView(
+                    access.clubId(),
+                    access.clubName(),
+                    canManage,
+                    canManage,
+                    canManage,
+                    countedNotice,
+                    previous,
+                    next,
+                    normalizeReturnQuery(returnRequest));
+        } catch (DataAccessException exception) {
+            log.error(
+                    "공지사항 상세 조회 중 DB 오류가 발생했습니다. clubId={}, postId={}, memberId={}",
+                    clubId,
+                    postId,
+                    memberId,
+                    exception);
+            throw new ClubNoticeDetailException(clubId, exception);
+        }
     }
 
     @Transactional
@@ -241,6 +316,27 @@ public class ClubNoticeService {
                 pageSize);
     }
 
+    private ClubNoticeReturnQuery normalizeReturnQuery(ClubNoticeListRequest request) {
+        ClubNoticeListRequest source = request == null
+                ? new ClubNoticeListRequest()
+                : request;
+        String keyword = trim(source.getKeyword());
+        if (keyword != null && keyword.length() > MAX_KEYWORD_LENGTH) {
+            keyword = null;
+        }
+        int page = Math.max(1, parseInteger(source.getPage(), 1));
+        int requestedPageSize =
+                parseInteger(source.getPageSize(), DEFAULT_PAGE_SIZE);
+        int pageSize = PAGE_SIZES.contains(requestedPageSize)
+                ? requestedPageSize
+                : DEFAULT_PAGE_SIZE;
+        return new ClubNoticeReturnQuery(
+                page,
+                pageSize,
+                allowedSearchType(source.getSearchType()),
+                keyword == null ? "" : keyword);
+    }
+
     private List<ClubNoticeListItem> withDisplayNumbers(
             List<ClubNoticeListItem> notices,
             long totalCount,
@@ -290,6 +386,18 @@ public class ClubNoticeService {
             return clubId;
         } catch (NumberFormatException ex) {
             throw new ClubNotFoundException();
+        }
+    }
+
+    private Long parsePostId(String value) {
+        try {
+            long postId = Long.parseLong(value);
+            if (postId < 1) {
+                throw new ClubNoticeNotFoundException();
+            }
+            return postId;
+        } catch (NumberFormatException ex) {
+            throw new ClubNoticeNotFoundException();
         }
     }
 

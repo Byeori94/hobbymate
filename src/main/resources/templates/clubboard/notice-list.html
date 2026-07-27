@@ -143,12 +143,19 @@
                             <div class="notice-title-line">
                                 <span class="notice-fixed-label"
                                       th:if="${notice.pinned}">고정</span>
-                                <strong th:text="${notice.title}">공지 제목</strong>
+                                <a class="notice-title-link"
+                                   th:href="@{/clubs/{clubId}/notices/{postId}(
+                                        clubId=${noticeView.clubId},
+                                        postId=${notice.postId},
+                                        page=${noticeView.notices.page},
+                                        pageSize=${noticeView.search.pageSize},
+                                        searchType=${noticeView.search.searchType},
+                                        keyword=${noticeView.search.keyword})}"
+                                   th:text="${notice.title}">
+                                    공지 제목
+                                </a>
                                 <small th:if="${notice.modified}">(수정됨)</small>
                             </div>
-                            <span class="notice-detail-pending">
-                                상세 조회는 준비 중입니다.
-                            </span>
                         </td>
                         <td class="notice-writer" data-label="작성자">
                             <span class="notice-role-badge"

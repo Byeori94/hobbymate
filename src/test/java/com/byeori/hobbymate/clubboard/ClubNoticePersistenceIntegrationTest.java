@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.byeori.hobbymate.clubboard.dao.ClubNoticeDao;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeCreateRequest;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeDetailView;
+import com.byeori.hobbymate.clubboard.dto.ClubNoticeListRequest;
 import com.byeori.hobbymate.clubboard.dto.ClubNoticeSearchCondition;
 import com.byeori.hobbymate.clubboard.service.ClubNoticeService;
 import com.byeori.hobbymate.clubboard.vo.ClubNoticeListItem;
@@ -77,6 +79,7 @@ class ClubNoticePersistenceIntegrationTest {
                        NOTICE_YN,
                        POST_STATUS,
                        VIEW_COUNT,
+                       UPDATED_AT,
                        DELETED_AT
                 FROM HM_CLUB_POST
                 WHERE CLUB_POST_ID = ?
@@ -109,5 +112,27 @@ class ClubNoticePersistenceIntegrationTest {
         assertThat(ordered)
                 .extracting(ClubNoticeListItem::postId)
                 .startsWith(postId, normalPostId);
+
+        ClubNoticeDetailView detail = clubNoticeService.getNoticeDetail(
+                String.valueOf(clubId),
+                String.valueOf(postId),
+                memberId,
+                new ClubNoticeListRequest());
+
+        assertThat(detail.notice().postId()).isEqualTo(postId);
+        assertThat(detail.notice().isPinned()).isTrue();
+        assertThat(detail.notice().viewCount()).isEqualTo(1L);
+        assertThat(detail.canEditNotice()).isTrue();
+        assertThat(detail.canDeleteNotice()).isTrue();
+        assertThat(detail.nextNotice()).isNotNull();
+        assertThat(detail.nextNotice().postId()).isEqualTo(normalPostId);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT VIEW_COUNT FROM HM_CLUB_POST WHERE CLUB_POST_ID = ?",
+                Long.class,
+                postId)).isEqualTo(1L);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT UPDATED_AT FROM HM_CLUB_POST WHERE CLUB_POST_ID = ?",
+                java.sql.Timestamp.class,
+                postId)).isEqualTo(stored.get("UPDATED_AT"));
     }
 }

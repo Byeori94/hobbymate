@@ -285,21 +285,30 @@ body {
     gap: 8px;
 }
 
-.notice-title-line strong {
+.notice-title-link {
     overflow: hidden;
+    color: var(--notice-text);
+    font-weight: 700;
+    text-decoration: none;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.notice-title-line small,
-.notice-detail-pending {
-    color: var(--notice-muted);
-    font-size: 12px;
+.notice-title-link:hover {
+    color: var(--notice-primary-deep);
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
-.notice-detail-pending {
-    display: block;
-    margin-top: 5px;
+.notice-title-link:focus-visible {
+    border-radius: 4px;
+    outline: 3px solid rgb(47 198 90 / 22%);
+    outline-offset: 3px;
+}
+
+.notice-title-line small {
+    color: var(--notice-muted);
+    font-size: 12px;
 }
 
 .notice-pin-badge,
@@ -492,7 +501,7 @@ body {
         display: none;
     }
 
-    .notice-title-line strong {
+    .notice-title-link {
         white-space: normal;
         word-break: break-word;
     }
