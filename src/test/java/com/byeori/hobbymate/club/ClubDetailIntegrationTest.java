@@ -1,5 +1,6 @@
 package com.byeori.hobbymate.club;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
@@ -46,6 +47,12 @@ class ClubDetailIntegrationTest {
         when(clubDetailService.getDetail("1", 7L))
                 .thenReturn(detailView(
                         "LEADER", "모임장", "모임 정보 수정", "내가 운영 중인 모임입니다."));
+        when(clubDetailService.getDetail("1", 8L))
+                .thenReturn(detailView(
+                        "MEMBER", "가입 회원", "모임 활동 보기", "가입한 모임입니다."));
+        when(clubDetailService.getDetail("1", 9L))
+                .thenReturn(detailView(
+                        "MANAGER", "운영진", "모임 관리", "운영진으로 활동 중인 모임입니다."));
     }
 
     @Test
@@ -56,7 +63,37 @@ class ClubDetailIntegrationTest {
                 .andExpect(content().string(Matchers.containsString("주말 독서 모임")))
                 .andExpect(content().string(Matchers.containsString("승인 후 가입")))
                 .andExpect(content().string(Matchers.containsString("로그인 후 가입할 수 있습니다.")))
+                .andExpect(content().string(Matchers.containsString("aria-current=\"page\"")))
+                .andExpect(content().string(Matchers.containsString("공지사항")))
+                .andExpect(content().string(Matchers.containsString("자유게시판")))
+                .andExpect(content().string(Matchers.containsString("만남모집")))
+                .andExpect(content().string(Matchers.containsString("만남후기")))
+                .andExpect(content().string(Matchers.containsString("data-club-nav-unavailable")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("모임관리"))))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("th:utext"))));
+    }
+
+    @Test
+    void clubNavigationKeepsFixedOrderAndUsesButtonsForUnavailableMenus() throws Exception {
+        String html = mockMvc.perform(get("/clubs/1"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        int navigationStart = html.indexOf("aria-label=\"모임 메뉴\"");
+        assertThat(navigationStart).isGreaterThanOrEqualTo(0);
+        String navigation = html.substring(navigationStart, html.indexOf("</nav>", navigationStart));
+
+        assertThat(navigation.indexOf("홈"))
+                .isLessThan(navigation.indexOf("공지사항"));
+        assertThat(navigation.indexOf("공지사항"))
+                .isLessThan(navigation.indexOf("자유게시판"));
+        assertThat(navigation.indexOf("자유게시판"))
+                .isLessThan(navigation.indexOf("만남모집"));
+        assertThat(navigation.indexOf("만남모집"))
+                .isLessThan(navigation.indexOf("만남후기"));
+        assertThat(navigation).contains("type=\"button\"", "준비 중인 기능입니다.");
     }
 
     @Test
@@ -64,7 +101,30 @@ class ClubDetailIntegrationTest {
         mockMvc.perform(get("/clubs/1").with(user(userDetails())))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("내가 운영 중인 모임입니다.")))
-                .andExpect(content().string(Matchers.containsString("모임 정보 수정")));
+                .andExpect(content().string(Matchers.containsString("모임 정보 수정")))
+                .andExpect(content().string(Matchers.containsString("모임관리")));
+    }
+
+    @Test
+    void regularMemberDoesNotSeeClubManagementMenu() throws Exception {
+        mockMvc.perform(get("/clubs/1").with(user(userDetails(8L))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("가입한 모임입니다.")))
+                .andExpect(content().string(Matchers.not(Matchers.containsString("모임관리"))));
+    }
+
+    @Test
+    void activeManagerSeesClubManagementMenu() throws Exception {
+        String html = mockMvc.perform(get("/clubs/1").with(user(userDetails(9L))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("운영진으로 활동 중인 모임입니다.")))
+                .andExpect(content().string(Matchers.containsString("club-internal-menu-manage")))
+                .andExpect(content().string(Matchers.containsString("모임관리")))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(html.indexOf("만남후기")).isLessThan(html.indexOf("모임관리"));
     }
 
     @Test
@@ -92,9 +152,15 @@ class ClubDetailIntegrationTest {
                 .andExpect(content().string(Matchers.containsString(
                         "href=\"/hobbymate/css/pages/club-detail.css\"")))
                 .andExpect(content().string(Matchers.containsString(
+                        "href=\"/hobbymate/css/common/club-nav.css\"")))
+                .andExpect(content().string(Matchers.containsString(
+                        "src=\"/hobbymate/js/common/club-nav.js\"")))
+                .andExpect(content().string(Matchers.containsString(
                         "src=\"/hobbymate/js/pages/club-detail.js\"")))
                 .andExpect(content().string(Matchers.containsString(
                         "href=\"/hobbymate/clubs\"")))
+                .andExpect(content().string(Matchers.containsString(
+                        "href=\"/hobbymate/clubs/1\"")))
                 .andExpect(content().string(Matchers.containsString(
                         "src=\"/hobbymate/images/logo/hobbymate_logo_transparent.png\"")));
     }
@@ -135,8 +201,12 @@ class ClubDetailIntegrationTest {
     }
 
     private HobbyMateUserDetails userDetails() {
+        return userDetails(7L);
+    }
+
+    private HobbyMateUserDetails userDetails(Long memberId) {
         return new HobbyMateUserDetails(
-                7L,
+                memberId,
                 "byeori94",
                 "encoded-password",
                 "벼리",

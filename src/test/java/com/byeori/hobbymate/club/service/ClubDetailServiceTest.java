@@ -55,6 +55,39 @@ class ClubDetailServiceTest {
         assertThat(view.relationshipType()).isEqualTo("LEADER");
         assertThat(view.relationshipLabel()).isEqualTo("모임장");
         assertThat(view.actionLabel()).isEqualTo("모임 정보 수정");
+        assertThat(view.canManageClub()).isTrue();
+    }
+
+    @Test
+    void onlyActiveManagerReceivesClubManagementPermission() {
+        when(clubDao.findPublicClubDetail(1L)).thenReturn(detail("OPEN", "APPROVAL"));
+        when(clubDao.findClubMemberRelation(1L, 7L))
+                .thenReturn(new ClubMemberRelation("MANAGER", "ACTIVE", "N", "N", null));
+
+        ClubDetailView activeManager = clubDetailService.getDetail("1", 7L);
+
+        assertThat(activeManager.relationshipType()).isEqualTo("MANAGER");
+        assertThat(activeManager.canManageClub()).isTrue();
+
+        when(clubDao.findClubMemberRelation(1L, 7L))
+                .thenReturn(new ClubMemberRelation("MANAGER", "LEFT", "N", "N", null));
+
+        ClubDetailView inactiveManager = clubDetailService.getDetail("1", 7L);
+
+        assertThat(inactiveManager.relationshipType()).isEqualTo("NON_MEMBER");
+        assertThat(inactiveManager.canManageClub()).isFalse();
+    }
+
+    @Test
+    void onlyLeaderAndManagerCanSeeManagementNavigation() {
+        ClubDetail club = detail("OPEN", "APPROVAL");
+
+        assertThat(new ClubDetailView(club, "MANAGER", "운영진", "모임 관리", "")
+                .canManageClub()).isTrue();
+        assertThat(new ClubDetailView(club, "MEMBER", "가입 회원", "모임 활동 보기", "")
+                .canManageClub()).isFalse();
+        assertThat(new ClubDetailView(club, "NON_MEMBER", "", "가입 신청", "")
+                .canManageClub()).isFalse();
     }
 
     @Test

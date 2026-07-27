@@ -9,7 +9,9 @@
     <link rel="stylesheet" th:href="@{/css/common/header.css}">
     <link rel="stylesheet" th:href="@{/css/common/footer.css}">
     <link rel="stylesheet" th:href="@{/css/pages/club-detail.css}">
+    <link rel="stylesheet" th:href="@{/css/common/club-nav.css}">
     <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/common/club-nav.js}"></script>
     <script defer th:src="@{/js/pages/club-detail.js}"></script>
 </head>
 <body>
@@ -82,6 +84,12 @@
                 </ul>
             </div>
         </section>
+
+        <div th:replace="~{fragments/club-nav :: clubNav(
+                clubId=${detail.club.clubId},
+                activeMenu=${activeClubMenu},
+                canManage=${detail.canManageClub()})}">
+        </div>
 
         <div class="club-detail-layout">
             <div class="club-detail-main">

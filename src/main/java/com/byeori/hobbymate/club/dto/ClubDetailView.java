@@ -16,4 +16,8 @@ public record ClubDetailView(
     public boolean isNonMember() {
         return "NON_MEMBER".equals(relationshipType);
     }
+
+    public boolean canManageClub() {
+        return "LEADER".equals(relationshipType) || "MANAGER".equals(relationshipType);
+    }
 }

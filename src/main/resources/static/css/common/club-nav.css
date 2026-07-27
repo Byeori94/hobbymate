@@ -1,0 +1,102 @@
+.club-internal-nav {
+    border-bottom: 1px solid var(--detail-border);
+    background: var(--detail-surface);
+}
+
+.club-internal-nav-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+}
+
+.club-internal-menu {
+    display: flex;
+    width: max-content;
+    min-width: max-content;
+    align-items: stretch;
+    padding: 0 30px;
+}
+
+.club-internal-menu-main {
+    display: flex;
+    align-items: stretch;
+}
+
+.club-internal-menu-item {
+    position: relative;
+    display: inline-flex;
+    min-height: 62px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    border: 0;
+    color: var(--detail-text);
+    background: transparent;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.club-internal-menu-item:hover {
+    color: var(--detail-primary-deep);
+    background: var(--detail-primary-soft);
+}
+
+.club-internal-menu-item:focus-visible {
+    z-index: 1;
+    outline: 3px solid rgb(52 199 89 / 24%);
+    outline-offset: -3px;
+}
+
+.club-internal-menu-item.is-active {
+    color: var(--detail-primary-deep);
+}
+
+.club-internal-menu-item.is-active::after {
+    position: absolute;
+    right: 16px;
+    bottom: 0;
+    left: 16px;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+    background: var(--detail-primary);
+    content: "";
+}
+
+.club-internal-menu-item.is-unavailable {
+    color: var(--detail-muted);
+}
+
+@media (min-width: 901px) {
+    .club-internal-menu {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .club-internal-menu {
+        padding: 0 8px;
+    }
+
+    .club-internal-menu-item {
+        min-height: 58px;
+        padding: 0 15px;
+        font-size: 14px;
+    }
+
+    .club-internal-menu-item.is-active::after {
+        right: 13px;
+        left: 13px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .club-internal-menu-item {
+        transition: none;
+    }
+}

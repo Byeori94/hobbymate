@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav class="club-internal-nav"
+     th:fragment="clubNav(clubId, activeMenu, canManage)"
+     aria-label="모임 메뉴">
+    <div class="club-internal-nav-scroll">
+        <div class="club-internal-menu">
+            <div class="club-internal-menu-main">
+                <a class="club-internal-menu-item"
+                   th:classappend="${activeMenu == 'HOME'} ? ' is-active'"
+                   th:attr="aria-current=${activeMenu == 'HOME' ? 'page' : null}"
+                   th:href="@{/clubs/{clubId}(clubId=${clubId})}">
+                    홈
+                </a>
+
+                <!-- 향후 실제 화면 구현 시 /clubs/{clubId}/notices 링크로 교체한다. -->
+                <button class="club-internal-menu-item is-unavailable"
+                        th:classappend="${activeMenu == 'NOTICE'} ? ' is-active'"
+                        th:attr="aria-current=${activeMenu == 'NOTICE' ? 'page' : null}"
+                        type="button"
+                        data-club-nav-unavailable
+                        data-unavailable-message="준비 중인 기능입니다.">
+                    공지사항
+                </button>
+
+                <!-- 향후 실제 화면 구현 시 /clubs/{clubId}/posts/free 링크로 교체한다. -->
+                <button class="club-internal-menu-item is-unavailable"
+                        th:classappend="${activeMenu == 'FREE'} ? ' is-active'"
+                        th:attr="aria-current=${activeMenu == 'FREE' ? 'page' : null}"
+                        type="button"
+                        data-club-nav-unavailable
+                        data-unavailable-message="준비 중인 기능입니다.">
+                    자유게시판
+                </button>
+
+                <!-- 향후 실제 화면 구현 시 /clubs/{clubId}/meetings 링크로 교체한다. -->
+                <button class="club-internal-menu-item is-unavailable"
+                        th:classappend="${activeMenu == 'MEETING'} ? ' is-active'"
+                        th:attr="aria-current=${activeMenu == 'MEETING' ? 'page' : null}"
+                        type="button"
+                        data-club-nav-unavailable
+                        data-unavailable-message="준비 중인 기능입니다.">
+                    만남모집
+                </button>
+
+                <!-- 향후 실제 화면 구현 시 /clubs/{clubId}/reviews 링크로 교체한다. -->
+                <button class="club-internal-menu-item is-unavailable"
+                        th:classappend="${activeMenu == 'REVIEW'} ? ' is-active'"
+                        th:attr="aria-current=${activeMenu == 'REVIEW' ? 'page' : null}"
+                        type="button"
+                        data-club-nav-unavailable
+                        data-unavailable-message="준비 중인 기능입니다.">
+                    만남후기
+                </button>
+
+                <!-- 실제 관리 화면 구현 시 서버 역할 검증이 적용된 /clubs/{clubId}/manage 링크로 교체한다. -->
+                <button class="club-internal-menu-item club-internal-menu-manage is-unavailable"
+                        th:if="${canManage}"
+                        th:classappend="${activeMenu == 'MANAGE'} ? ' is-active'"
+                        th:attr="aria-current=${activeMenu == 'MANAGE' ? 'page' : null}"
+                        type="button"
+                        data-club-nav-unavailable
+                        data-unavailable-message="준비 중인 기능입니다.">
+                    모임관리
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+</body>
+</html>

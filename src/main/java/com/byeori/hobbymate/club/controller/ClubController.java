@@ -68,6 +68,7 @@ public class ClubController {
             Model model) {
         ClubDetailView detail = clubDetailService.getDetail(clubId, memberId(userDetails));
         model.addAttribute("detail", detail);
+        model.addAttribute("activeClubMenu", "HOME");
         return DETAIL_VIEW;
     }
 
