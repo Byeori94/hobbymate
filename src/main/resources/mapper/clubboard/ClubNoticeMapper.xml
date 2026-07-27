@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.byeori.hobbymate.clubboard.dao.ClubNoticeDao">
+
+    <select id="findClubBoardAccess"
+            resultType="com.byeori.hobbymate.clubboard.vo.ClubBoardAccess">
+        SELECT C.CLUB_ID AS clubId,
+               C.CLUB_NAME AS clubName,
+               CM.CLUB_ROLE AS memberRole,
+               CM.MEMBER_STATUS AS memberStatus
+        FROM HM_CLUB C
+        LEFT JOIN HM_CLUB_MEMBER CM
+               ON CM.CLUB_ID = C.CLUB_ID
+              AND CM.MEMBER_ID = #{memberId}
+        WHERE C.CLUB_ID = #{clubId}
+          AND C.CLUB_STATUS = 'ACTIVE'
+    </select>
+
+    <sql id="noticeConditions">
+        WHERE P.CLUB_ID = #{clubId}
+          AND P.POST_TYPE = 'NOTICE'
+          AND P.POST_STATUS = 'ACTIVE'
+          AND P.DELETED_AT IS NULL
+        <if test="keyword != null and keyword != ''">
+            <choose>
+                <when test="searchType == 'TITLE'">
+                    AND P.TITLE LIKE #{keywordPattern} ESCAPE '!'
+                </when>
+                <when test="searchType == 'CONTENT'">
+                    AND P.CONTENT LIKE #{keywordPattern} ESCAPE '!'
+                </when>
+                <when test="searchType == 'WRITER'">
+                    AND M.NICKNAME LIKE #{keywordPattern} ESCAPE '!'
+                </when>
+                <otherwise>
+                    AND (
+                        P.TITLE LIKE #{keywordPattern} ESCAPE '!'
+                        OR P.CONTENT LIKE #{keywordPattern} ESCAPE '!'
+                    )
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+
+    <select id="countNotices" resultType="long">
+        SELECT COUNT(*)
+        FROM HM_CLUB_POST P
+        LEFT JOIN HM_MEMBER M
+               ON M.MEMBER_ID = P.AUTHOR_MEMBER_ID
+        <include refid="noticeConditions"/>
+    </select>
+
+    <select id="findNotices"
+            resultType="com.byeori.hobbymate.clubboard.vo.ClubNoticeListItem">
+        SELECT P.CLUB_POST_ID AS postId,
+               P.TITLE AS title,
+               CASE
+                   WHEN AUTHOR_CM.MEMBER_STATUS = 'LEFT' THEN '탈퇴한 회원'
+                   WHEN AUTHOR_CM.MEMBER_STATUS = 'KICKED' THEN '강퇴된 회원'
+                   WHEN M.MEMBER_STATUS = 'WITHDRAWN' THEN '탈퇴한 회원'
+                   ELSE COALESCE(M.NICKNAME, '알 수 없는 회원')
+               END AS writerNickname,
+               CASE
+                   WHEN AUTHOR_CM.MEMBER_STATUS = 'ACTIVE'
+                        AND AUTHOR_CM.CLUB_ROLE IN ('LEADER', 'MANAGER')
+                   THEN AUTHOR_CM.CLUB_ROLE
+                   ELSE NULL
+               END AS writerRole,
+               P.NOTICE_YN AS pinnedYn,
+               P.VIEW_COUNT AS viewCount,
+               P.CREATED_AT AS createdAt,
+               P.UPDATED_AT AS updatedAt
+        FROM HM_CLUB_POST P
+        LEFT JOIN HM_MEMBER M
+               ON M.MEMBER_ID = P.AUTHOR_MEMBER_ID
+        LEFT JOIN HM_CLUB_MEMBER AUTHOR_CM
+               ON AUTHOR_CM.CLUB_ID = P.CLUB_ID
+              AND AUTHOR_CM.MEMBER_ID = P.AUTHOR_MEMBER_ID
+        <include refid="noticeConditions"/>
+        ORDER BY P.NOTICE_YN DESC,
+                 P.CREATED_AT DESC,
+                 P.CLUB_POST_ID DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+</mapper>

@@ -15,15 +15,12 @@
                     홈
                 </a>
 
-                <!-- 향후 실제 화면 구현 시 /clubs/{clubId}/notices 링크로 교체한다. -->
-                <button class="club-internal-menu-item is-unavailable"
-                        th:classappend="${activeMenu == 'NOTICE'} ? ' is-active'"
-                        th:attr="aria-current=${activeMenu == 'NOTICE' ? 'page' : null}"
-                        type="button"
-                        data-club-nav-unavailable
-                        data-unavailable-message="준비 중인 기능입니다.">
+                <a class="club-internal-menu-item"
+                   th:classappend="${activeMenu == 'NOTICE'} ? ' is-active'"
+                   th:attr="aria-current=${activeMenu == 'NOTICE' ? 'page' : null}"
+                   th:href="@{/clubs/{clubId}/notices(clubId=${clubId})}">
                     공지사항
-                </button>
+                </a>
 
                 <!-- 향후 실제 화면 구현 시 /clubs/{clubId}/posts/free 링크로 교체한다. -->
                 <button class="club-internal-menu-item is-unavailable"

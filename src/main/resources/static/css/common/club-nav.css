@@ -1,6 +1,6 @@
 .club-internal-nav {
-    border-bottom: 1px solid var(--detail-border);
-    background: var(--detail-surface);
+    border-bottom: 1px solid var(--detail-border, var(--notice-border, #dce2e7));
+    background: var(--detail-surface, var(--notice-surface, #ffffff));
 }
 
 .club-internal-nav-scroll {
@@ -30,7 +30,7 @@
     justify-content: center;
     padding: 0 18px;
     border: 0;
-    color: var(--detail-text);
+    color: var(--detail-text, var(--notice-text, #29313d));
     background: transparent;
     font: inherit;
     font-size: 15px;
@@ -42,8 +42,8 @@
 }
 
 .club-internal-menu-item:hover {
-    color: var(--detail-primary-deep);
-    background: var(--detail-primary-soft);
+    color: var(--detail-primary-deep, var(--notice-primary-deep, #068538));
+    background: var(--detail-primary-soft, var(--notice-primary-soft, #effaf2));
 }
 
 .club-internal-menu-item:focus-visible {
@@ -53,7 +53,7 @@
 }
 
 .club-internal-menu-item.is-active {
-    color: var(--detail-primary-deep);
+    color: var(--detail-primary-deep, var(--notice-primary-deep, #068538));
 }
 
 .club-internal-menu-item.is-active::after {
@@ -63,12 +63,12 @@
     left: 16px;
     height: 3px;
     border-radius: 3px 3px 0 0;
-    background: var(--detail-primary);
+    background: var(--detail-primary, var(--notice-primary, #2fc65a));
     content: "";
 }
 
 .club-internal-menu-item.is-unavailable {
-    color: var(--detail-muted);
+    color: var(--detail-muted, var(--notice-muted, #687588));
 }
 
 @media (min-width: 901px) {

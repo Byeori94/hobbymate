@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" th:content="${noticeView.clubName + ' 모임 공지사항'}">
+    <title th:text="${noticeView.clubName + ' 공지사항 | HobbyMate'}">모임 공지사항 | HobbyMate</title>
+    <link rel="stylesheet" th:href="@{/css/common/header.css}">
+    <link rel="stylesheet" th:href="@{/css/common/footer.css}">
+    <link rel="stylesheet" th:href="@{/css/common/club-nav.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/club-notice-list.css}">
+    <script defer th:src="@{/js/common/header.js}"></script>
+    <script defer th:src="@{/js/common/club-nav.js}"></script>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="club-notice-page">
+    <nav class="club-notice-breadcrumb" aria-label="모임 탐색 경로">
+        <a th:href="@{/clubs/{clubId}(clubId=${noticeView.clubId})}">← 모임 홈으로</a>
+    </nav>
+
+    <section class="club-notice-shell" aria-labelledby="notice-title">
+        <header class="club-notice-club-heading">
+            <p>CLUB BOARD</p>
+            <strong th:text="${noticeView.clubName}">주말 독서 모임</strong>
+        </header>
+
+        <div th:replace="~{fragments/club-nav :: clubNav(
+                clubId=${noticeView.clubId},
+                activeMenu=${activeClubMenu},
+                canManage=${noticeView.canManageClub})}">
+        </div>
+
+        <div class="club-notice-content">
+            <div class="club-notice-title-row">
+                <div>
+                    <h1 id="notice-title">공지사항</h1>
+                    <p>모임 운영과 활동에 필요한 중요한 소식을 확인해 보세요.</p>
+                </div>
+                <button class="notice-write-button"
+                        th:if="${noticeView.canWriteNotice}"
+                        type="button"
+                        data-club-nav-unavailable
+                        data-unavailable-message="공지사항 작성 기능은 준비 중입니다.">
+                    공지 작성
+                    <span>준비 중</span>
+                </button>
+            </div>
+
+            <div class="notice-validation-message"
+                 th:if="${!#lists.isEmpty(noticeView.validationMessages)}"
+                 role="alert">
+                <p th:each="message : ${noticeView.validationMessages}"
+                   th:text="${message}">
+                    검색 조건을 확인해 주세요.
+                </p>
+            </div>
+
+            <form class="notice-search-form"
+                  th:action="@{/clubs/{clubId}/notices(clubId=${noticeView.clubId})}"
+                  method="get">
+                <label for="searchType">검색 대상</label>
+                <select id="searchType" name="searchType">
+                    <option value="TITLE"
+                            th:selected="${noticeView.search.searchType == 'TITLE'}">제목</option>
+                    <option value="CONTENT"
+                            th:selected="${noticeView.search.searchType == 'CONTENT'}">내용</option>
+                    <option value="TITLE_CONTENT"
+                            th:selected="${noticeView.search.searchType == 'TITLE_CONTENT'}">제목+내용</option>
+                    <option value="WRITER"
+                            th:selected="${noticeView.search.searchType == 'WRITER'}">작성자</option>
+                </select>
+
+                <label class="visually-hidden" for="keyword">검색어</label>
+                <input id="keyword"
+                       name="keyword"
+                       type="search"
+                       maxlength="100"
+                       th:value="${noticeView.search.keyword}"
+                       placeholder="검색어를 입력하세요">
+
+                <label class="visually-hidden" for="pageSize">페이지당 표시 개수</label>
+                <select id="pageSize" name="pageSize" aria-label="페이지당 표시 개수">
+                    <option value="20" th:selected="${noticeView.search.pageSize == 20}">20개</option>
+                    <option value="50" th:selected="${noticeView.search.pageSize == 50}">50개</option>
+                    <option value="100" th:selected="${noticeView.search.pageSize == 100}">100개</option>
+                </select>
+
+                <button class="notice-search-button" type="submit">검색</button>
+                <a class="notice-reset-button"
+                   th:href="@{/clubs/{clubId}/notices(clubId=${noticeView.clubId})}">
+                    초기화
+                </a>
+            </form>
+
+            <div class="notice-result-summary">
+                <p>
+                    총 <strong th:text="${noticeView.notices.totalCount}">0</strong>개의 공지
+                </p>
+                <p th:if="${noticeView.notices.totalCount > 0}">
+                    <strong th:text="${noticeView.notices.page}">1</strong>
+                    /
+                    <span th:text="${noticeView.notices.totalPages}">1</span> 페이지
+                </p>
+            </div>
+
+            <div class="notice-table-wrap"
+                 th:unless="${#lists.isEmpty(noticeView.notices.content)}">
+                <table class="notice-table">
+                    <caption class="visually-hidden">모임 공지사항 목록</caption>
+                    <thead>
+                    <tr>
+                        <th scope="col">번호</th>
+                        <th scope="col">제목</th>
+                        <th scope="col">작성자</th>
+                        <th scope="col">작성일</th>
+                        <th scope="col">조회</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="notice : ${noticeView.notices.content}"
+                        th:classappend="${notice.pinned} ? ' is-pinned'">
+                        <td class="notice-number" data-label="번호">
+                            <span class="notice-pin-badge"
+                                  th:if="${notice.pinned}">중요</span>
+                            <span th:unless="${notice.pinned}"
+                                  th:text="${notice.displayNumber}">1</span>
+                        </td>
+                        <td class="notice-title-cell" data-label="제목">
+                            <div class="notice-title-line">
+                                <span class="notice-fixed-label"
+                                      th:if="${notice.pinned}">고정</span>
+                                <strong th:text="${notice.title}">공지 제목</strong>
+                                <small th:if="${notice.modified}">(수정됨)</small>
+                            </div>
+                            <span class="notice-detail-pending">
+                                상세 조회는 준비 중입니다.
+                            </span>
+                        </td>
+                        <td class="notice-writer" data-label="작성자">
+                            <span class="notice-role-badge"
+                                  th:if="${!#strings.isEmpty(notice.writerRoleLabel())}"
+                                  th:text="${notice.writerRoleLabel()}">모임장</span>
+                            <span th:text="${notice.writerDisplayName()}">벼리</span>
+                        </td>
+                        <td data-label="작성일">
+                            <time th:if="${notice.createdAt != null}"
+                                  th:datetime="${notice.createdAt}"
+                                  th:text="${#temporals.format(notice.createdAt, 'yyyy.MM.dd')}">
+                                2026.07.27
+                            </time>
+                            <span th:unless="${notice.createdAt != null}">-</span>
+                        </td>
+                        <td data-label="조회" th:text="${notice.viewCount}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="notice-empty"
+                 th:if="${#lists.isEmpty(noticeView.notices.content)}">
+                <span aria-hidden="true">HM</span>
+                <h2 th:text="${#strings.isEmpty(noticeView.search.keyword)
+                    ? '등록된 공지사항이 없습니다.'
+                    : '검색 조건에 맞는 공지사항이 없습니다.'}">
+                    등록된 공지사항이 없습니다.
+                </h2>
+                <p th:text="${#strings.isEmpty(noticeView.search.keyword)
+                    ? '새로운 공지가 등록되면 이곳에서 확인할 수 있어요.'
+                    : '검색어나 검색 대상을 변경해 다시 찾아보세요.'}">
+                    새로운 공지가 등록되면 이곳에서 확인할 수 있어요.
+                </p>
+                <a th:if="${!#strings.isEmpty(noticeView.search.keyword)}"
+                   class="notice-reset-button"
+                   th:href="@{/clubs/{clubId}/notices(clubId=${noticeView.clubId})}">
+                    검색 초기화
+                </a>
+            </div>
+
+            <nav class="notice-pagination"
+                 th:if="${noticeView.notices.totalCount > 0}"
+                 aria-label="공지사항 목록 페이지">
+                <span class="page-disabled"
+                      th:unless="${noticeView.notices.hasPreviousBlock}">이전</span>
+                <a th:if="${noticeView.notices.hasPreviousBlock}"
+                   th:href="@{/clubs/{clubId}/notices(
+                        clubId=${noticeView.clubId},
+                        page=${noticeView.notices.previousBlockPage()},
+                        pageSize=${noticeView.search.pageSize},
+                        searchType=${noticeView.search.searchType},
+                        keyword=${noticeView.search.keyword})}">
+                    이전
+                </a>
+
+                <th:block th:each="pageNo : ${#numbers.sequence(
+                        noticeView.notices.startPage, noticeView.notices.endPage)}">
+                    <span class="page-current"
+                          th:if="${pageNo == noticeView.notices.page}"
+                          th:text="${pageNo}"
+                          aria-current="page">1</span>
+                    <a th:unless="${pageNo == noticeView.notices.page}"
+                       th:text="${pageNo}"
+                       th:href="@{/clubs/{clubId}/notices(
+                            clubId=${noticeView.clubId},
+                            page=${pageNo},
+                            pageSize=${noticeView.search.pageSize},
+                            searchType=${noticeView.search.searchType},
+                            keyword=${noticeView.search.keyword})}">
+                        2
+                    </a>
+                </th:block>
+
+                <a th:if="${noticeView.notices.hasNextBlock}"
+                   th:href="@{/clubs/{clubId}/notices(
+                        clubId=${noticeView.clubId},
+                        page=${noticeView.notices.nextBlockPage()},
+                        pageSize=${noticeView.search.pageSize},
+                        searchType=${noticeView.search.searchType},
+                        keyword=${noticeView.search.keyword})}">
+                    다음
+                </a>
+                <span class="page-disabled"
+                      th:unless="${noticeView.notices.hasNextBlock}">다음</span>
+            </nav>
+
+            <div class="notice-bottom-action">
+                <a th:href="@{/clubs/{clubId}(clubId=${noticeView.clubId})}">모임 홈으로 돌아가기</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

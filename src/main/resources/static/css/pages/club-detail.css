@@ -44,6 +44,17 @@ body {
     text-underline-offset: 4px;
 }
 
+.detail-flash-message {
+    margin: -8px 0 22px;
+    padding: 14px 18px;
+    border: 1px solid #f0c6c6;
+    border-radius: 12px;
+    color: #9f2525;
+    background: #fff7f7;
+    font-size: 14px;
+    font-weight: 700;
+}
+
 .detail-breadcrumb a:focus-visible,
 .back-to-list-button:focus-visible,
 .detail-action-button:focus-visible {
